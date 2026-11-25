@@ -1562,6 +1562,7 @@ flex-wrap: wrap;
                     <span class="bookmarklet-badge">⚡ SIN INSPECTOR (CHROME / BRAVE / OPERA / SAFARI)</span>
                     <p><strong>Paso 1:</strong> Arrastra este botón a tu barra de marcadores/favoritos: 
                     <a class="btn-bookmarklet" href="javascript:(function(){let targetFrame=null;const frames=document.querySelectorAll('iframe');for(let i=0;i<frames.length;i++){try{if(frames[i].contentWindow.performance.getEntriesByType('resource').some(r=>r.name.includes('get_player_info.php'))){targetFrame=frames[i];break;}}catch(e){}}function enganchar(w){if(!w||w._swHooked)return;w._swHooked=true;function bajar(t){if(t&&t.includes('{')){const b=new Blob([t],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='partida_socialwars.json';document.body.appendChild(a);a.click();a.remove();alert('¡Partida descargada! Ya puedes subir partida_socialwars.json en Social Wars Codex.');}}const oOpen=w.XMLHttpRequest.prototype.open;const oSend=w.XMLHttpRequest.prototype.send;w.XMLHttpRequest.prototype.open=function(m,u){this._u=u;return oOpen.apply(this,arguments);};w.XMLHttpRequest.prototype.send=function(){this.addEventListener('load',function(){if(this._u&&this._u.includes('get_player_info.php'))bajar(this.responseText);});return oSend.apply(this,arguments);};const oFetch=w.fetch;if(oFetch){w.fetch=function(){const arg=arguments[0];const u=(arg&&arg.url)?arg.url:String(arg);return oFetch.apply(this,arguments).then(r=>{if(u.includes('get_player_info.php'))r.clone().text().then(bajar);return r;});};}}if(targetFrame){const iv=setInterval(()=>{try{enganchar(targetFrame.contentWindow);}catch(e){}},40);setTimeout(()=>clearInterval(iv),15000);targetFrame.contentWindow.location.reload();}else{enganchar(window);alert('Extractor activo. Entra al Mapa Mundial o visita un amigo y regresa a tu isla para descargar.');}})();" title="Arrástrame a tu barra de favoritos">📥 EXTRAER PARTIDA SW</a>
+                    <button type="button" class="btn-backup" id="btn-copy-bookmarklet">📋 COPIAR CÓDIGO</button>
                     </p>
                     <p class="bookmarklet-sub"><strong>Paso 2:</strong> Abre <strong>socialwars.com.br</strong>, haz clic en ese marcador guardado y al cargar/mover algo en tu isla se descargará <code>partida_socialwars.json</code> listo para subir en <strong>⬆ IMPORTAR PROGRESO</strong>.</p>
                 </div>
@@ -15813,6 +15814,32 @@ squadGridEl.appendChild(card);
 if (btnGenerateSquad) {
 btnGenerateSquad.addEventListener("click", generarRecomendacionEjercito);
 }
+    // =========================================
+    // COPIAR CÓDIGO DEL BOOKMARKLET AL PORTAPAPELES
+    // =========================================
+    const btnCopyBookmarklet = document.getElementById("btn-copy-bookmarklet");
+    const linkBookmarklet = document.querySelector(".btn-bookmarklet");
+
+    if (btnCopyBookmarklet && linkBookmarklet) {
+        btnCopyBookmarklet.addEventListener("click", () => {
+            const codigo = linkBookmarklet.getAttribute("href");
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(codigo).then(() => {
+                    const textoOriginal = btnCopyBookmarklet.textContent;
+                    btnCopyBookmarklet.textContent = "✅ ¡CÓDIGO COPIADO!";
+                    alert("¡Código copiado! Crea un nuevo marcador en tu navegador, ponle de nombre 'Extraer Partida SW' y pega este código en el campo URL / Dirección.");
+                    setTimeout(() => {
+                        btnCopyBookmarklet.textContent = textoOriginal;
+                    }, 2500);
+                }).catch(() => {
+                    prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
+                });
+            } else {
+                prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
+            }
+        });
+    }
+
 actualizarBarraColeccion();
 actualizarVista();
 renderizarFacciones();

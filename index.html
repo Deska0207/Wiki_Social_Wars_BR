@@ -1263,6 +1263,144 @@ flex-wrap: wrap;
     color: var(--text-muted);
     font-size: 0.85rem;
 }
+/* =========================================
+   GENERADOR TÁCTICO DE EJÉRCITO
+   ========================================= */
+.squad-section {
+    background-color: #11161d;
+    border-top: 3px solid var(--accent-cyan);
+    padding: 4rem 0;
+}
+
+.squad-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.squad-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1.5rem;
+    background-color: var(--bg-panel);
+    border: 3px solid #000;
+    box-shadow: 6px 6px 0px #050709;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.squad-mode-group {
+    flex: 1;
+    min-width: 260px;
+}
+
+.squad-mode-group label {
+    display: block;
+    color: var(--accent-yellow);
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.checkbox-tactical {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding-bottom: 10px;
+}
+
+.btn-generate-squad {
+    padding: 11px 22px;
+    font-size: 1rem;
+}
+
+.squad-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    background-color: #0b0f14;
+    border: 2px solid var(--accent-cyan);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.squad-kpi span {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.squad-kpi strong {
+    color: #fff;
+    font-size: 1.15rem;
+}
+
+.squad-kpi.kpi-highlight strong {
+    color: var(--accent-green);
+    font-size: 1.3rem;
+}
+
+.squad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.squad-card {
+    background-color: var(--bg-panel);
+    border: 2px solid #000;
+    border-top: 4px solid var(--accent-green);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    box-shadow: 4px 4px 0px #050709;
+}
+
+.squad-qty-badge {
+    background-color: var(--accent-yellow);
+    color: #000;
+    font-family: var(--font-display);
+    padding: 3px 10px;
+    font-size: 0.95rem;
+    align-self: flex-end;
+}
+
+.squad-card img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.squad-card h4 {
+    font-family: var(--font-display);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.squad-card-meta {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    border-top: 1px solid #1f2833;
+    padding-top: 6px;
+    margin-top: auto;
+}
+
+.squad-card-meta strong {
+    color: var(--accent-cyan);
+}
 
 </style>
 </head>
@@ -1281,6 +1419,7 @@ flex-wrap: wrap;
              <a href="#base-datos" class="nav-btn active">BASE DE DATOS</a>
              <a href="#facciones" class="nav-btn">FACCIONES</a>
              <a href="#simulador" class="nav-btn">SIMULADOR 1V1</a>
+             <a href="#recomendador" class="nav-btn">ESCUADRÓN ÓPTIMO</a>
              <a href="#aportes" class="nav-btn btn-warning">APORTES COMUNIDAD</a>
          </nav>
         </div>
@@ -1453,6 +1592,44 @@ flex-wrap: wrap;
             </div>
         </div>
     </section>
+
+ <!-- SECCIÓN DE RECOMENDACIÓN DE EJÉRCITO SEGÚN INVENTARIO Y POBLACIÓN -->
+ <section class="squad-section" id="recomendador">
+     <div class="squad-container">
+         <div class="section-header">
+             <h2>GENERADOR TÁCTICO DE EJÉRCITO</h2>
+             <span class="counter-badge" id="squad-pop-badge">POBLACIÓN OBJETIVO: 0</span>
+         </div>
+         <p class="section-desc">Analiza tu inventario actual y arma automáticamente la formación más letal que cabe dentro de tu límite de población.</p>
+
+         <div class="squad-controls">
+             <div class="squad-mode-group">
+                 <label for="squad-strategy">ESTRATEGIA DE FORMACIÓN:</label>
+                 <select id="squad-strategy" class="sim-level-select">
+                     <option value="max_fc">MÁXIMA FUERZA DE COMBATE (PODER BRUTO)</option>
+                     <option value="balanced">EQUILIBRADO (TANQUES + RANGO + AÉREO/MECHA)</option>
+                     <option value="ranged">ARTILLERÍA Y LARGO ALCANCE (RANGO ≥ 4)</option>
+                 </select>
+             </div>
+             <div class="squad-check-group">
+                 <label class="checkbox-tactical">
+                     <input type="checkbox" id="squad-include-working"> Incluir unidades que están "Trabajando"
+                 </label>
+             </div>
+             <button type="button" class="btn-tactical btn-generate-squad" id="btn-generate-squad">⚡ GENERAR EJÉRCITO RECOMENDADO</button>
+         </div>
+
+         <div class="squad-summary" id="squad-summary" style="display: none;">
+             <div class="squad-kpi"><span>TROPAS DESPLEGADAS:</span> <strong id="sq-total-units">0</strong></div>
+             <div class="squad-kpi"><span>POBLACIÓN USADA:</span> <strong id="sq-used-pop">0 / 0</strong></div>
+             <div class="squad-kpi kpi-highlight"><span>FUERZA DE COMBATE TOTAL:</span> <strong id="sq-total-fc">0</strong></div>
+         </div>
+
+         <div class="squad-grid" id="squad-grid">
+             <p class="sim-placeholder-text">Carga tu inventario (manual o importando tu partida), ajusta tu población máxima arriba y presiona <strong>GENERAR EJÉRCITO RECOMENDADO</strong>.</p>
+         </div>
+     </div>
+ </section>
 
     <!-- SECCIÓN DE APORTES DE LA COMUNIDAD -->
     <section class="community-section" id="aportes">
@@ -15046,221 +15223,234 @@ localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
 actualizarBarraColeccion();
 });
 }
-    // =========================================
-    // EXPORTAR, IMPORTAR Y LIMPIAR INVENTARIO (WIKI + ARCHIVO DEL JUEGO)
-    // =========================================
-    const btnExportInv = document.getElementById("btn-export-inv");
-    const btnImportInv = document.getElementById("btn-import-inv");
-    const btnResetInv = document.getElementById("btn-reset-inv");
-    const inputImportFile = document.getElementById("input-import-file");
-
-    if (btnExportInv) {
-        btnExportInv.addEventListener("click", () => {
-            if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) {
-                alert("Tu inventario y población están en 0. Agrega datos antes de exportar.");
-                return;
-            }
-            const respaldoCompleto = {
-                poblacionMaxima: poblacionMaxima,
-                unidades: miColeccion
-            };
-            const dataStr = JSON.stringify(respaldoCompleto, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-
-            const enlace = document.createElement("a");
-            enlace.href = url;
-            const fecha = new Date().toISOString().slice(0, 10);
-            enlace.download = "inventario_socialwars_" + fecha + ".json";
-            document.body.appendChild(enlace);
-            enlace.click();
-            document.body.removeChild(enlace);
-            URL.revokeObjectURL(url);
-        });
-    }
-
-    if (btnImportInv && inputImportFile) {
-        btnImportInv.addEventListener("click", () => {
-            inputImportFile.click();
-        });
-
-        inputImportFile.addEventListener("change", (e) => {
-            const archivo = e.target.files.item(0);
-            if (!archivo) return;
-
-            const lector = new FileReader();
-            lector.onload = (evento) => {
-                try {
-                    const datosImportados = JSON.parse(evento.target.result);
-                    if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
-                        throw new Error("Formato inválido");
-                    }
-
-                    const nuevaColeccion = {};
-
-                    // CASO 1: Archivo directo del juego (cualquier cuenta / múltiples islas)
-                    const mapaPrincipal = datosImportados.map || (datosImportados.playerInfo && datosImportados.playerInfo.map);
-                    const listaMapas = datosImportados.maps || (datosImportados.playerInfo && datosImportados.playerInfo.maps);
-
-                    if ((mapaPrincipal && typeof mapaPrincipal === "object") || Array.isArray(listaMapas)) {
-                        const categoriasNoTropa = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
-                        const idsNoEncontrados = new Set();
-
-                        function buscarClaveProfunda(obj, claveBuscada) {
-                            if (!obj || typeof obj !== "object") return null;
-                            if (obj[claveBuscada] && typeof obj[claveBuscada] === "object" && !Array.isArray(obj[claveBuscada])) {
-                                return obj[claveBuscada];
-                            }
-                            for (const k of Object.keys(obj)) {
-                                const res = buscarClaveProfunda(obj[k], claveBuscada);
-                                if (res) return res;
-                            }
-                            return null;
-                        }
-
-                        function sumarAlmacen(objetoOrigen) {
-                            if (!objetoOrigen || typeof objetoOrigen !== "object") return;
-                            Object.keys(objetoOrigen).forEach(idKey => {
-                                const cantidad = parseInt(objetoOrigen[idKey]) || 0;
-                                const idStr = String(idKey);
-                                const infoUnidad = mapaUnidades[idStr];
-
-                                if (cantidad > 0) {
-                                    if (infoUnidad) {
-                                        const cat = (infoUnidad.categoria || "").toUpperCase();
-                                        if (!categoriasNoTropa.includes(cat)) {
-                                            if (!nuevaColeccion[idStr]) {
-                                                nuevaColeccion[idStr] = { almacen: 0, trabajando: 0, mapa: 0 };
-                                            }
-                                            nuevaColeccion[idStr].almacen += cantidad;
-                                        }
-                                    } else {
-                                        idsNoEncontrados.add(idStr);
-                                    }
-                                }
-                            });
-                        }
-
-                        function procesarIsla(islaObj) {
-                            if (!islaObj || typeof islaObj !== "object") return;
-                            const itemsMapa = islaObj.items || {};
-                            const unitsMapa = islaObj.units || {};
-
-                            // Revisar tanto "items" como "units" en la isla
-                            [itemsMapa, unitsMapa].forEach(contenedor => {
-                                Object.values(contenedor).forEach(arrItem => {
-                                    if (Array.isArray(arrItem) && arrItem.length > 0) {
-                                        const idMapa = String(arrItem.at(0));
-                                        const infoUnidad = mapaUnidades[idMapa];
-
-                                        if (infoUnidad) {
-                                            const cat = (infoUnidad.categoria || "").toUpperCase();
-                                            if (!categoriasNoTropa.includes(cat)) {
-                                                if (!nuevaColeccion[idMapa]) nuevaColeccion[idMapa] = { almacen: 0, trabajando: 0, mapa: 0 };
-                                                nuevaColeccion[idMapa].mapa += 1;
-                                            }
-                                        }
-
-                                        // Unidades dentro de edificios (Búnker, Fusión, Granjas)
-                                        const nombreEdificio = infoUnidad ? infoUnidad.nombre.toLowerCase() : "";
-                                        const esHospital = nombreEdificio.includes("hospital");
-                                        const trabajadores = arrItem.at(5);
-
-                                        if (!esHospital && Array.isArray(trabajadores)) {
-                                            trabajadores.forEach(trab => {
-                                                if (Array.isArray(trab) && trab.length > 0) {
-                                                    const idTrab = String(trab.at(0));
-                                                    if (mapaUnidades[idTrab]) {
-                                                        if (!nuevaColeccion[idTrab]) nuevaColeccion[idTrab] = { almacen: 0, trabajando: 0, mapa: 0 };
-                                                        nuevaColeccion[idTrab].trabajando += 1;
-                                                    } else {
-                                                        idsNoEncontrados.add(idTrab);
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                            });
-                        }
-
-                        // 1. Procesar isla principal y todas las islas secundarias si existen
-                        if (mapaPrincipal) procesarIsla(mapaPrincipal);
-                        if (Array.isArray(listaMapas)) {
-                            listaMapas.forEach(isla => procesarIsla(isla));
-                        } else if (listaMapas && typeof listaMapas === "object") {
-                            Object.values(listaMapas).forEach(isla => procesarIsla(isla));
-                        }
-
-                        // 2. Sumar Almacén Ilimitado ("store") + Limitado ("gifts")
-                        const storeAlmacen = buscarClaveProfunda(datosImportados, "store") || {};
-                        const giftsAlmacen = buscarClaveProfunda(datosImportados, "gifts") || {};
-                        sumarAlmacen(storeAlmacen);
-                        sumarAlmacen(giftsAlmacen);
-
-                        // 3. Población máxima
-                        const incPop = (mapaPrincipal && typeof mapaPrincipal.increasedPopulation === "number")
-                            ? mapaPrincipal.increasedPopulation
-                            : 0;
-                        poblacionMaxima = Math.min(450, Math.max(0, 50 + incPop));
-                        localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
-
-                        miColeccion = nuevaColeccion;
-                        guardarColeccion();
-                        actualizarVista();
-                        alert("¡Partida sincronizada! Se detectaron " + Object.keys(miColeccion).length + " unidades únicas.");
-                        inputImportFile.value = "";
-                        return;
-                    }
-
-                    // CASO 2: Archivo exportado desde Social Wars Codex
-                    let origenUnidades = datosImportados;
-                    if (datosImportados.unidades && typeof datosImportados.unidades === "object") {
-                        origenUnidades = datosImportados.unidades;
-                        if (typeof datosImportados.poblacionMaxima === "number") {
-                            poblacionMaxima = Math.min(450, Math.max(0, datosImportados.poblacionMaxima));
-                            localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
-                        }
-                    }
-
-                    Object.keys(origenUnidades).forEach(id => {
-                        const reg = origenUnidades[id];
-                        if (reg && typeof reg === "object") {
-                            const a = Math.max(0, parseInt(reg.almacen) || 0);
-                            const t = Math.max(0, parseInt(reg.trabajando) || 0);
-                            const m = Math.max(0, parseInt(reg.mapa) || 0);
-                            if ((a + t + m) > 0) {
-                                nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
-                            }
-                        }
-                    });
-
-                    miColeccion = nuevaColeccion;
-                    guardarColeccion();
-                    actualizarVista();
-                    alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas y población máxima de " + poblacionMaxima + ".");
-                } catch (err) {
-                    alert("Error: El archivo seleccionado no es un respaldo válido ni un JSON de partida.");
-                }
-                inputImportFile.value = "";
-            };
-            lector.readAsText(archivo);
-        });
-    }
-
-    if (btnResetInv) {
-        btnResetInv.addEventListener("click", () => {
-            if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) return;
-            if (confirm("¿Estás seguro de que deseas borrar todo tu inventario y reiniciar tu población máxima a 0?")) {
-                miColeccion = {};
-                poblacionMaxima = 0;
-                localStorage.setItem("sw_codex_pop_max", "0");
-                guardarColeccion();
-                filtrar();
-            }
-        });
-    }
-
+// =========================================
+// EXPORTAR, IMPORTAR Y LIMPIAR INVENTARIO (WIKI + ARCHIVO DEL JUEGO)
+// =========================================
+const btnExportInv = document.getElementById("btn-export-inv");
+const btnImportInv = document.getElementById("btn-import-inv");
+const btnResetInv = document.getElementById("btn-reset-inv");
+const inputImportFile = document.getElementById("input-import-file");
+if (btnExportInv) {
+btnExportInv.addEventListener("click", () => {
+if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) {
+alert("Tu inventario y población están en 0. Agrega datos antes de exportar.");
+return;
+}
+const respaldoCompleto = {
+poblacionMaxima: poblacionMaxima,
+unidades: miColeccion
+};
+const dataStr = JSON.stringify(respaldoCompleto, null, 2);
+const blob = new Blob([dataStr], { type: "application/json" });
+const url = URL.createObjectURL(blob);
+const enlace = document.createElement("a");
+enlace.href = url;
+const fecha = new Date().toISOString().slice(0, 10);
+enlace.download = "inventario_socialwars_" + fecha + ".json";
+document.body.appendChild(enlace);
+enlace.click();
+document.body.removeChild(enlace);
+URL.revokeObjectURL(url);
+});
+}
+if (btnImportInv && inputImportFile) {
+btnImportInv.addEventListener("click", () => {
+inputImportFile.click();
+});
+inputImportFile.addEventListener("change", (e) => {
+const archivo = e.target.files.item(0);
+if (!archivo) return;
+const lector = new FileReader();
+lector.onload = (evento) => {
+try {
+const datosImportados = JSON.parse(evento.target.result);
+if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
+throw new Error("Formato inválido");
+}
+const nuevaColeccion = {};
+// CASO 1: Archivo directo del juego (cualquier cuenta / múltiples islas)
+const mapaPrincipal = datosImportados.map || (datosImportados.playerInfo && datosImportados.playerInfo.map);
+const listaMapas = datosImportados.maps || (datosImportados.playerInfo && datosImportados.playerInfo.maps);
+if ((mapaPrincipal && typeof mapaPrincipal === "object") || Array.isArray(listaMapas)) {
+const categoriasNoTropa = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
+const idsNoEncontrados = new Set();
+function buscarClaveProfunda(obj, claveBuscada) {
+if (!obj || typeof obj !== "object") return null;
+if (obj[claveBuscada] && typeof obj[claveBuscada] === "object" && !Array.isArray(obj[claveBuscada])) {
+return obj[claveBuscada];
+}
+for (const k of Object.keys(obj)) {
+const res = buscarClaveProfunda(obj[k], claveBuscada);
+if (res) return res;
+}
+return null;
+}
+function sumarAlmacen(objetoOrigen) {
+if (!objetoOrigen || typeof objetoOrigen !== "object") return;
+Object.keys(objetoOrigen).forEach(idKey => {
+const cantidad = parseInt(objetoOrigen[idKey]) || 0;
+const idStr = String(idKey);
+const infoUnidad = mapaUnidades[idStr];
+if (cantidad > 0) {
+if (infoUnidad) {
+const cat = (infoUnidad.categoria || "").toUpperCase();
+if (!categoriasNoTropa.includes(cat)) {
+if (!nuevaColeccion[idStr]) {
+nuevaColeccion[idStr] = { almacen: 0, trabajando: 0, mapa: 0 };
+}
+nuevaColeccion[idStr].almacen += cantidad;
+}
+} else {
+idsNoEncontrados.add(idStr);
+}
+}
+});
+}
+function procesarIsla(islaObj) {
+if (!islaObj || typeof islaObj !== "object") return;
+const itemsMapa = islaObj.items || {};
+const unitsMapa = islaObj.units || {};
+// Revisar tanto "items" como "units" en la isla
+[itemsMapa, unitsMapa].forEach(contenedor => {
+Object.values(contenedor).forEach(arrItem => {
+if (Array.isArray(arrItem) && arrItem.length > 0) {
+const idMapa = String(arrItem.at(0));
+const infoUnidad = mapaUnidades[idMapa];
+if (infoUnidad) {
+const cat = (infoUnidad.categoria || "").toUpperCase();
+if (!categoriasNoTropa.includes(cat)) {
+if (!nuevaColeccion[idMapa]) nuevaColeccion[idMapa] = { almacen: 0, trabajando: 0, mapa: 0 };
+nuevaColeccion[idMapa].mapa += 1;
+}
+}
+// Unidades dentro de edificios (Búnker, Fusión, Granjas)
+const nombreEdificio = infoUnidad ? infoUnidad.nombre.toLowerCase() : "";
+const esHospital = nombreEdificio.includes("hospital");
+const trabajadores = arrItem.at(5);
+if (!esHospital && Array.isArray(trabajadores)) {
+trabajadores.forEach(trab => {
+if (Array.isArray(trab) && trab.length > 0) {
+const idTrab = String(trab.at(0));
+if (mapaUnidades[idTrab]) {
+if (!nuevaColeccion[idTrab]) nuevaColeccion[idTrab] = { almacen: 0, trabajando: 0, mapa: 0 };
+nuevaColeccion[idTrab].trabajando += 1;
+} else {
+idsNoEncontrados.add(idTrab);
+}
+}
+});
+}
+}
+});
+});
+}
+// 1. Procesar isla principal y todas las islas secundarias si existen
+if (mapaPrincipal) procesarIsla(mapaPrincipal);
+if (Array.isArray(listaMapas)) {
+listaMapas.forEach(isla => procesarIsla(isla));
+} else if (listaMapas && typeof listaMapas === "object") {
+Object.values(listaMapas).forEach(isla => procesarIsla(isla));
+}
+// 2. Sumar Almacén Ilimitado ("store") + Limitado ("gifts")
+const storeAlmacen = buscarClaveProfunda(datosImportados, "store") || {};
+const giftsAlmacen = buscarClaveProfunda(datosImportados, "gifts") || {};
+sumarAlmacen(storeAlmacen);
+sumarAlmacen(giftsAlmacen);
+// 3. Población máxima real (Base 50 + Edificios de población en mapa + increasedPopulation)
+const bonosEdificiosPob = {
+"1": 3,     // House I
+"47": 4,    // House II
+"48": 5,    // House III
+"175": 75,  // Babilonian Temple
+"253": 75   // Parliament
+};
+let incPopServidor = 0;
+function buscarIncPop(obj) {
+if (!obj || typeof obj !== "object") return null;
+if (obj.increasedPopulation !== undefined && obj.increasedPopulation !== null) {
+const num = parseInt(obj.increasedPopulation);
+if (!isNaN(num)) return num;
+}
+for (const k of Object.keys(obj)) {
+const res = buscarIncPop(obj[k]);
+if (res !== null) return res;
+}
+return null;
+}
+const incDetectado = buscarIncPop(datosImportados);
+if (incDetectado !== null) incPopServidor = incDetectado;
+let popPorEdificios = 0;
+function sumarEdificiosIsla(islaObj) {
+if (!islaObj || typeof islaObj !== "object" || !islaObj.items) return;
+Object.values(islaObj.items).forEach(arrItem => {
+if (Array.isArray(arrItem) && arrItem.length > 0) {
+const idEdif = String(arrItem.at(0));
+if (bonosEdificiosPob[idEdif]) {
+popPorEdificios += bonosEdificiosPob[idEdif];
+}
+}
+});
+}
+if (mapaPrincipal) sumarEdificiosIsla(mapaPrincipal);
+if (Array.isArray(listaMapas)) {
+listaMapas.forEach(isla => sumarEdificiosIsla(isla));
+} else if (listaMapas && typeof listaMapas === "object") {
+Object.values(listaMapas).forEach(isla => sumarEdificiosIsla(isla));
+}
+const popCalculada = 50 + incPopServidor + popPorEdificios;
+poblacionMaxima = Math.min(450, Math.max(50, popCalculada));
+localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
+miColeccion = nuevaColeccion;
+guardarColeccion();
+actualizarVista();
+alert("¡Partida sincronizada! Se detectaron " + Object.keys(miColeccion).length + " unidades únicas.");
+inputImportFile.value = "";
+return;
+}
+// CASO 2: Archivo exportado desde Social Wars Codex
+let origenUnidades = datosImportados;
+if (datosImportados.unidades && typeof datosImportados.unidades === "object") {
+origenUnidades = datosImportados.unidades;
+if (typeof datosImportados.poblacionMaxima === "number") {
+poblacionMaxima = Math.min(450, Math.max(0, datosImportados.poblacionMaxima));
+localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
+}
+}
+Object.keys(origenUnidades).forEach(id => {
+const reg = origenUnidades[id];
+if (reg && typeof reg === "object") {
+const a = Math.max(0, parseInt(reg.almacen) || 0);
+const t = Math.max(0, parseInt(reg.trabajando) || 0);
+const m = Math.max(0, parseInt(reg.mapa) || 0);
+if ((a + t + m) > 0) {
+nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
+}
+}
+});
+miColeccion = nuevaColeccion;
+guardarColeccion();
+actualizarVista();
+alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas y población máxima de " + poblacionMaxima + ".");
+} catch (err) {
+alert("Error: El archivo seleccionado no es un respaldo válido ni un JSON de partida.");
+}
+inputImportFile.value = "";
+};
+lector.readAsText(archivo);
+});
+}
+if (btnResetInv) {
+btnResetInv.addEventListener("click", () => {
+if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) return;
+if (confirm("¿Estás seguro de que deseas borrar todo tu inventario y reiniciar tu población máxima a 0?")) {
+miColeccion = {};
+poblacionMaxima = 0;
+localStorage.setItem("sw_codex_pop_max", "0");
+guardarColeccion();
+filtrar();
+}
+});
+}
 // =========================================
 // SIMULADOR DE COMBATE 1 VS 1
 // =========================================
@@ -15426,6 +15616,132 @@ simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos necesitan 
 }
 }
 inicializarSimulador();
+// =========================================
+// GENERADOR TÁCTICO DE EJÉRCITO ÓPTIMO
+// =========================================
+const btnGenerateSquad = document.getElementById("btn-generate-squad");
+const squadStrategyEl = document.getElementById("squad-strategy");
+const squadIncludeWorkingEl = document.getElementById("squad-include-working");
+const squadGridEl = document.getElementById("squad-grid");
+const squadSummaryEl = document.getElementById("squad-summary");
+const squadPopBadgeEl = document.getElementById("squad-pop-badge");
+function generarRecomendacionEjercito() {
+if (!squadGridEl) return;
+if (squadPopBadgeEl) {
+squadPopBadgeEl.textContent = "POBLACIÓN OBJETIVO: " + poblacionMaxima;
+}
+if (poblacionMaxima <= 0) {
+squadSummaryEl.style.display = "none";
+squadGridEl.innerHTML = 'Primero configura tu Población Máxima (con los botones +5 en la barra superior o importando tu partida).';
+return;
+}
+const incluirTrabajando = squadIncludeWorkingEl ? squadIncludeWorkingEl.checked : false;
+const estrategia = squadStrategyEl ? squadStrategyEl.value : "max_fc";
+// Construir lista de copias individuales disponibles en el inventario del jugador
+const copiasDisponibles = [];
+Object.keys(miColeccion).forEach(uid => {
+const reg = miColeccion[uid];
+const u = mapaUnidades[uid];
+if (!u || !u.estadisticas) return;
+const pob = parseInt(u.estadisticas.poblacion) || 0;
+const fc = parseInt(u.estadisticas.fuerza_combate) || 0;
+const rango = parseInt(u.estadisticas.rango) || 1;
+const cat = (u.categoria || "").toUpperCase();
+// Solo unidades desplegables con población > 0 y fuerza de combate > 0
+if (pob <= 0 || fc <= 0 || pob > poblacionMaxima) return;
+if (estrategia === "ranged" && rango < 4) return;
+let cantDisponible = (reg.almacen || 0) + (reg.mapa || 0);
+if (incluirTrabajando) cantDisponible += (reg.trabajando || 0);
+// Calcular puntaje estratégico según el modo elegido
+let valorTactico = fc;
+if (estrategia === "balanced") {
+const bonoRango = rango >= 4 ? 1.15 : 1.0;
+const bonoTipo = (cat === "MECHA" || cat === "AEREO" || cat === "VEHICULO") ? 1.12 : 1.0;
+valorTactico = Math.round(fc * bonoRango * bonoTipo);
+}
+// Limitar copias por tipo a lo necesario para llenar la población máxima
+const maxCopiasUtiles = Math.min(cantDisponible, Math.floor(poblacionMaxima / pob));
+for (let i = 0; i < maxCopiasUtiles; i++) {
+copiasDisponibles.push({
+unidad: u,
+pob: pob,
+fc: fc,
+score: valorTactico
+});
+}
+});
+if (copiasDisponibles.length === 0) {
+squadSummaryEl.style.display = "none";
+squadGridEl.innerHTML = 'No hay unidades disponibles en tu inventario que cumplan con los filtros y quepan en ' + poblacionMaxima + ' de población.';
+return;
+}
+// Algoritmo de Mochila (Knapsack 0/1) para encontrar la combinación exacta más fuerte
+const cap = poblacionMaxima;
+const dp = new Array(cap + 1).fill(0);
+const keep = Array.from({ length: copiasDisponibles.length }, () => new Uint8Array(cap + 1));
+for (let i = 0; i < copiasDisponibles.length; i++) {
+const item = copiasDisponibles[i];
+for (let w = cap; w >= item.pob; w--) {
+const nuevoValor = dp[w - item.pob] + item.score;
+if (nuevoValor > dp[w]) {
+dp[w] = nuevoValor;
+keep[i][w] = 1;
+}
+}
+}
+// Reconstruir las unidades seleccionadas
+let wRestante = cap;
+const agrupadas = {};
+let pobUsada = 0;
+let fcTotal = 0;
+let totalTropas = 0;
+for (let i = copiasDisponibles.length - 1; i >= 0; i--) {
+if (keep[i][wRestante] === 1) {
+const elegido = copiasDisponibles[i];
+const uid = String(elegido.unidad.id);
+if (!agrupadas[uid]) {
+agrupadas[uid] = {
+unidad: elegido.unidad,
+cantidad: 0,
+pobUnit: elegido.pob,
+fcUnit: elegido.fc
+};
+}
+agrupadas[uid].cantidad += 1;
+pobUsada += elegido.pob;
+fcTotal += elegido.fc;
+totalTropas += 1;
+wRestante -= elegido.pob;
+}
+}
+// Renderizar resumen y tarjetas recomendadas
+squadSummaryEl.style.display = "flex";
+document.getElementById("sq-total-units").textContent = totalTropas.toLocaleString();
+document.getElementById("sq-used-pop").textContent = pobUsada + " / " + poblacionMaxima;
+document.getElementById("sq-total-fc").textContent = fcTotal.toLocaleString();
+squadGridEl.innerHTML = "";
+const listaFinal = Object.values(agrupadas).sort((a, b) => (b.fcUnit * b.cantidad) - (a.fcUnit * a.cantidad));
+listaFinal.forEach(grupo => {
+const u = grupo.unidad;
+const card = crearElemento("div", "squad-card");
+card.appendChild(crearElemento("span", "squad-qty-badge", "x" + grupo.cantidad));
+if (u.imagen_ruta) {
+const img = document.createElement("img");
+img.src = u.imagen_ruta;
+img.alt = u.nombre;
+card.appendChild(img);
+}
+card.appendChild(crearElemento("h4", "", u.nombre));
+const meta = crearElemento("div", "squad-card-meta");
+meta.innerHTML = "POB: " + (grupo.pobUnit * grupo.cantidad) + "" +
+"FC: " + (grupo.fcUnit * grupo.cantidad).toLocaleString() + "";
+card.appendChild(meta);
+squadGridEl.appendChild(card);
+});
+}
+if (btnGenerateSquad) {
+btnGenerateSquad.addEventListener("click", generarRecomendacionEjercito);
+}
 actualizarBarraColeccion();
 actualizarVista();
 renderizarFacciones();

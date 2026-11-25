@@ -1401,6 +1401,67 @@ flex-wrap: wrap;
 .squad-card-meta strong {
     color: var(--accent-cyan);
 }
+/* =========================================
+   CAJA DE BOOKMARKLET (DESCARGA DIRECTA)
+   ========================================= */
+.bookmarklet-box {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background-color: #0b0f14;
+    border: 2px dashed var(--accent-cyan);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.bookmarklet-badge {
+    display: inline-block;
+    background-color: var(--accent-cyan);
+    color: #000;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.bookmarklet-info p {
+    font-size: 0.88rem;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.bookmarklet-sub {
+    color: var(--text-muted) !important;
+    font-size: 0.82rem !important;
+    margin-top: 4px;
+}
+
+.btn-bookmarklet {
+    display: inline-block;
+    background-color: var(--accent-yellow);
+    color: #000 !important;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    padding: 4px 12px;
+    border: 2px solid #000;
+    box-shadow: 3px 3px 0px #000;
+    text-decoration: none;
+    cursor: grab;
+    margin: 0 4px;
+    transition: transform 0.1s;
+}
+
+.btn-bookmarklet:hover {
+    background-color: #ffea00;
+    transform: translateY(-1px);
+}
+
+.btn-bookmarklet:active {
+    cursor: grabbing;
+}
 
 </style>
 </head>
@@ -1494,6 +1555,16 @@ flex-wrap: wrap;
                 <button type="button" class="btn-backup" id="btn-import-inv">⬆ IMPORTAR PROGRESO</button>
                 <button type="button" class="btn-backup btn-reset-inv" id="btn-reset-inv">🗑 LIMPIAR TODO</button>
                 <input type="file" id="input-import-file" accept=".json,.txt" style="display: none;">
+            </div>    
+                <!-- HERRAMIENTA DE DESCARGA RÁPIDA DESDE EL JUEGO (BOOKMARKLET) -->
+            <div class="bookmarklet-box">
+                <div class="bookmarklet-info">
+                    <span class="bookmarklet-badge">⚡ SIN INSPECTOR (CHROME / BRAVE / OPERA / SAFARI)</span>
+                    <p><strong>Paso 1:</strong> Arrastra este botón a tu barra de marcadores/favoritos: 
+                        <a class="btn-bookmarklet" href="javascript:(function(){if(window._swHooked){alert('El extractor ya está activo. Recarga la página del juego.');return;}window._swHooked=true;function bajar(txt){const b=new Blob([txt],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='partida_socialwars.json';document.body.appendChild(a);a.click();a.remove();alert('¡Partida descargada! Ya puedes subir partida_socialwars.json en Social Wars Codex.');}const oOpen=XMLHttpRequest.prototype.open;const oSend=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(m,u){this._u=u;return oOpen.apply(this,arguments);};XMLHttpRequest.prototype.send=function(){this.addEventListener('load',function(){if(this._u&&this._u.includes('get_player_info.php')){bajar(this.responseText);}});return oSend.apply(this,arguments);};const oFetch=window.fetch;window.fetch=function(){const u=arguments[0]&&arguments[0].url?arguments[0].url:String(arguments[0]);return oFetch.apply(this,arguments).then(r=>{if(u.includes('get_player_info.php')){r.clone().text().then(bajar);}return r;});};alert('Extractor activado. Ahora haz clic dentro del juego o mueve una unidad para descargar tu partida automáticamente.');})();" title="Arrástrame a tu barra de favoritos">📥 EXTRAER PARTIDA SW</a>
+                    </p>
+                    <p class="bookmarklet-sub"><strong>Paso 2:</strong> Abre <strong>socialwars.com.br</strong>, haz clic en ese marcador guardado y al cargar/mover algo en tu isla se descargará <code>partida_socialwars.json</code> listo para subir en <strong>⬆ IMPORTAR PROGRESO</strong>.</p>
+                </div>
             </div>
         </div>
 

@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://gstatic.com" crossorigin>
     <link href="https://googleapis.com/css2?family=Black+Ops+One&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+@import url('https://googleapis.com');
+
 /* =========================================
    VARIABLES Y PALETA TÁCTICA RETRO-FUTURISTA
    ========================================= */
@@ -26,8 +28,9 @@
     --text-main: #e2e8f0;
     --text-muted: #8d99ae;
     
-    --font-display: 'Black Ops One', cursive;
-    --font-tech: 'Chakra Petch', sans-serif;
+    --font-display: 'Black Ops One', 'Impact', 'Arial Black', sans-serif;
+    --font-tech: 'Chakra Petch', 'Segoe UI', Roboto, sans-serif;
+
 }
 
 * {
@@ -1351,7 +1354,7 @@ flex-wrap: wrap;
                 <button type="button" class="btn-backup" id="btn-export-inv">⬇ EXPORTAR PROGRESO</button>
                 <button type="button" class="btn-backup" id="btn-import-inv">⬆ IMPORTAR PROGRESO</button>
                 <button type="button" class="btn-backup btn-reset-inv" id="btn-reset-inv">🗑 LIMPIAR TODO</button>
-                <input type="file" id="input-import-file" accept=".json" style="display: none;">
+                <input type="file" id="input-import-file" accept=".json,.txt" style="display: none;">
             </div>
         </div>
 
@@ -15043,95 +15046,221 @@ localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
 actualizarBarraColeccion();
 });
 }
-// =========================================
-// EXPORTAR, IMPORTAR Y LIMPIAR INVENTARIO (INCLUYE POBLACIÓN)
-// =========================================
-const btnExportInv = document.getElementById("btn-export-inv");
-const btnImportInv = document.getElementById("btn-import-inv");
-const btnResetInv = document.getElementById("btn-reset-inv");
-const inputImportFile = document.getElementById("input-import-file");
-if (btnExportInv) {
-btnExportInv.addEventListener("click", () => {
-if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) {
-alert("Tu inventario y población están en 0. Agrega datos antes de exportar.");
-return;
-}
-const respaldoCompleto = {
-poblacionMaxima: poblacionMaxima,
-unidades: miColeccion
-};
-const dataStr = JSON.stringify(respaldoCompleto, null, 2);
-const blob = new Blob([dataStr], { type: "application/json" });
-const url = URL.createObjectURL(blob);
-const enlace = document.createElement("a");
-enlace.href = url;
-const fecha = new Date().toISOString().slice(0, 10);
-enlace.download = "inventario_socialwars_" + fecha + ".json";
-document.body.appendChild(enlace);
-enlace.click();
-document.body.removeChild(enlace);
-URL.revokeObjectURL(url);
-});
-}
-if (btnImportInv && inputImportFile) {
-btnImportInv.addEventListener("click", () => {
-inputImportFile.click();
-});
-inputImportFile.addEventListener("change", (e) => {
-const archivo = e.target.files.item(0);
-if (!archivo) return;
-const lector = new FileReader();
-lector.onload = (evento) => {
-try {
-const datosImportados = JSON.parse(evento.target.result);
-if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
-throw new Error("Formato inválido");
-}
-// Detectar si el archivo trae el nuevo formato { poblacionMaxima, unidades } o el anterior
-let origenUnidades = datosImportados;
-if (datosImportados.unidades && typeof datosImportados.unidades === "object") {
-origenUnidades = datosImportados.unidades;
-if (typeof datosImportados.poblacionMaxima === "number") {
-poblacionMaxima = Math.min(450, Math.max(0, datosImportados.poblacionMaxima));
-localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
-}
-}
-const nuevaColeccion = {};
-Object.keys(origenUnidades).forEach(id => {
-const reg = origenUnidades[id];
-if (reg && typeof reg === "object") {
-const a = Math.max(0, parseInt(reg.almacen) || 0);
-const t = Math.max(0, parseInt(reg.trabajando) || 0);
-const m = Math.max(0, parseInt(reg.mapa) || 0);
-if ((a + t + m) > 0) {
-nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
-}
-}
-});
-miColeccion = nuevaColeccion;
-guardarColeccion();
-actualizarVista();
-alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas y población máxima de " + poblacionMaxima + ".");
-} catch (err) {
-alert("Error: El archivo seleccionado no es un respaldo válido de Social Wars Codex.");
-}
-inputImportFile.value = "";
-};
-lector.readAsText(archivo);
-});
-}
-if (btnResetInv) {
-btnResetInv.addEventListener("click", () => {
-if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) return;
-if (confirm("¿Estás seguro de que deseas borrar todo tu inventario y reiniciar tu población máxima a 0?")) {
-miColeccion = {};
-poblacionMaxima = 0;
-localStorage.setItem("sw_codex_pop_max", "0");
-guardarColeccion();
-filtrar();
-}
-});
-}
+    // =========================================
+    // EXPORTAR, IMPORTAR Y LIMPIAR INVENTARIO (WIKI + ARCHIVO DEL JUEGO)
+    // =========================================
+    const btnExportInv = document.getElementById("btn-export-inv");
+    const btnImportInv = document.getElementById("btn-import-inv");
+    const btnResetInv = document.getElementById("btn-reset-inv");
+    const inputImportFile = document.getElementById("input-import-file");
+
+    if (btnExportInv) {
+        btnExportInv.addEventListener("click", () => {
+            if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) {
+                alert("Tu inventario y población están en 0. Agrega datos antes de exportar.");
+                return;
+            }
+            const respaldoCompleto = {
+                poblacionMaxima: poblacionMaxima,
+                unidades: miColeccion
+            };
+            const dataStr = JSON.stringify(respaldoCompleto, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const enlace = document.createElement("a");
+            enlace.href = url;
+            const fecha = new Date().toISOString().slice(0, 10);
+            enlace.download = "inventario_socialwars_" + fecha + ".json";
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    if (btnImportInv && inputImportFile) {
+        btnImportInv.addEventListener("click", () => {
+            inputImportFile.click();
+        });
+
+        inputImportFile.addEventListener("change", (e) => {
+            const archivo = e.target.files.item(0);
+            if (!archivo) return;
+
+            const lector = new FileReader();
+            lector.onload = (evento) => {
+                try {
+                    const datosImportados = JSON.parse(evento.target.result);
+                    if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
+                        throw new Error("Formato inválido");
+                    }
+
+                    const nuevaColeccion = {};
+
+                    // CASO 1: Archivo directo del juego (cualquier cuenta / múltiples islas)
+                    const mapaPrincipal = datosImportados.map || (datosImportados.playerInfo && datosImportados.playerInfo.map);
+                    const listaMapas = datosImportados.maps || (datosImportados.playerInfo && datosImportados.playerInfo.maps);
+
+                    if ((mapaPrincipal && typeof mapaPrincipal === "object") || Array.isArray(listaMapas)) {
+                        const categoriasNoTropa = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
+                        const idsNoEncontrados = new Set();
+
+                        function buscarClaveProfunda(obj, claveBuscada) {
+                            if (!obj || typeof obj !== "object") return null;
+                            if (obj[claveBuscada] && typeof obj[claveBuscada] === "object" && !Array.isArray(obj[claveBuscada])) {
+                                return obj[claveBuscada];
+                            }
+                            for (const k of Object.keys(obj)) {
+                                const res = buscarClaveProfunda(obj[k], claveBuscada);
+                                if (res) return res;
+                            }
+                            return null;
+                        }
+
+                        function sumarAlmacen(objetoOrigen) {
+                            if (!objetoOrigen || typeof objetoOrigen !== "object") return;
+                            Object.keys(objetoOrigen).forEach(idKey => {
+                                const cantidad = parseInt(objetoOrigen[idKey]) || 0;
+                                const idStr = String(idKey);
+                                const infoUnidad = mapaUnidades[idStr];
+
+                                if (cantidad > 0) {
+                                    if (infoUnidad) {
+                                        const cat = (infoUnidad.categoria || "").toUpperCase();
+                                        if (!categoriasNoTropa.includes(cat)) {
+                                            if (!nuevaColeccion[idStr]) {
+                                                nuevaColeccion[idStr] = { almacen: 0, trabajando: 0, mapa: 0 };
+                                            }
+                                            nuevaColeccion[idStr].almacen += cantidad;
+                                        }
+                                    } else {
+                                        idsNoEncontrados.add(idStr);
+                                    }
+                                }
+                            });
+                        }
+
+                        function procesarIsla(islaObj) {
+                            if (!islaObj || typeof islaObj !== "object") return;
+                            const itemsMapa = islaObj.items || {};
+                            const unitsMapa = islaObj.units || {};
+
+                            // Revisar tanto "items" como "units" en la isla
+                            [itemsMapa, unitsMapa].forEach(contenedor => {
+                                Object.values(contenedor).forEach(arrItem => {
+                                    if (Array.isArray(arrItem) && arrItem.length > 0) {
+                                        const idMapa = String(arrItem.at(0));
+                                        const infoUnidad = mapaUnidades[idMapa];
+
+                                        if (infoUnidad) {
+                                            const cat = (infoUnidad.categoria || "").toUpperCase();
+                                            if (!categoriasNoTropa.includes(cat)) {
+                                                if (!nuevaColeccion[idMapa]) nuevaColeccion[idMapa] = { almacen: 0, trabajando: 0, mapa: 0 };
+                                                nuevaColeccion[idMapa].mapa += 1;
+                                            }
+                                        }
+
+                                        // Unidades dentro de edificios (Búnker, Fusión, Granjas)
+                                        const nombreEdificio = infoUnidad ? infoUnidad.nombre.toLowerCase() : "";
+                                        const esHospital = nombreEdificio.includes("hospital");
+                                        const trabajadores = arrItem.at(5);
+
+                                        if (!esHospital && Array.isArray(trabajadores)) {
+                                            trabajadores.forEach(trab => {
+                                                if (Array.isArray(trab) && trab.length > 0) {
+                                                    const idTrab = String(trab.at(0));
+                                                    if (mapaUnidades[idTrab]) {
+                                                        if (!nuevaColeccion[idTrab]) nuevaColeccion[idTrab] = { almacen: 0, trabajando: 0, mapa: 0 };
+                                                        nuevaColeccion[idTrab].trabajando += 1;
+                                                    } else {
+                                                        idsNoEncontrados.add(idTrab);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            });
+                        }
+
+                        // 1. Procesar isla principal y todas las islas secundarias si existen
+                        if (mapaPrincipal) procesarIsla(mapaPrincipal);
+                        if (Array.isArray(listaMapas)) {
+                            listaMapas.forEach(isla => procesarIsla(isla));
+                        } else if (listaMapas && typeof listaMapas === "object") {
+                            Object.values(listaMapas).forEach(isla => procesarIsla(isla));
+                        }
+
+                        // 2. Sumar Almacén Ilimitado ("store") + Limitado ("gifts")
+                        const storeAlmacen = buscarClaveProfunda(datosImportados, "store") || {};
+                        const giftsAlmacen = buscarClaveProfunda(datosImportados, "gifts") || {};
+                        sumarAlmacen(storeAlmacen);
+                        sumarAlmacen(giftsAlmacen);
+
+                        // 3. Población máxima
+                        const incPop = (mapaPrincipal && typeof mapaPrincipal.increasedPopulation === "number")
+                            ? mapaPrincipal.increasedPopulation
+                            : 0;
+                        poblacionMaxima = Math.min(450, Math.max(0, 50 + incPop));
+                        localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
+
+                        miColeccion = nuevaColeccion;
+                        guardarColeccion();
+                        actualizarVista();
+                        alert("¡Partida sincronizada! Se detectaron " + Object.keys(miColeccion).length + " unidades únicas.");
+                        inputImportFile.value = "";
+                        return;
+                    }
+
+                    // CASO 2: Archivo exportado desde Social Wars Codex
+                    let origenUnidades = datosImportados;
+                    if (datosImportados.unidades && typeof datosImportados.unidades === "object") {
+                        origenUnidades = datosImportados.unidades;
+                        if (typeof datosImportados.poblacionMaxima === "number") {
+                            poblacionMaxima = Math.min(450, Math.max(0, datosImportados.poblacionMaxima));
+                            localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
+                        }
+                    }
+
+                    Object.keys(origenUnidades).forEach(id => {
+                        const reg = origenUnidades[id];
+                        if (reg && typeof reg === "object") {
+                            const a = Math.max(0, parseInt(reg.almacen) || 0);
+                            const t = Math.max(0, parseInt(reg.trabajando) || 0);
+                            const m = Math.max(0, parseInt(reg.mapa) || 0);
+                            if ((a + t + m) > 0) {
+                                nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
+                            }
+                        }
+                    });
+
+                    miColeccion = nuevaColeccion;
+                    guardarColeccion();
+                    actualizarVista();
+                    alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas y población máxima de " + poblacionMaxima + ".");
+                } catch (err) {
+                    alert("Error: El archivo seleccionado no es un respaldo válido ni un JSON de partida.");
+                }
+                inputImportFile.value = "";
+            };
+            lector.readAsText(archivo);
+        });
+    }
+
+    if (btnResetInv) {
+        btnResetInv.addEventListener("click", () => {
+            if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) return;
+            if (confirm("¿Estás seguro de que deseas borrar todo tu inventario y reiniciar tu población máxima a 0?")) {
+                miColeccion = {};
+                poblacionMaxima = 0;
+                localStorage.setItem("sw_codex_pop_max", "0");
+                guardarColeccion();
+                filtrar();
+            }
+        });
+    }
+
 // =========================================
 // SIMULADOR DE COMBATE 1 VS 1
 // =========================================

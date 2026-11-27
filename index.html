@@ -30,7 +30,6 @@
     
     --font-display: 'Black Ops One', 'Impact', 'Arial Black', sans-serif;
     --font-tech: 'Chakra Petch', 'Segoe UI', Roboto, sans-serif;
-
 }
 
 * {
@@ -108,7 +107,8 @@ body {
 
 .main-nav {
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .nav-btn {
@@ -116,8 +116,9 @@ body {
     color: var(--text-main);
     background-color: var(--bg-panel);
     border: 2px solid var(--border-metal);
-    padding: 8px 16px;
+    padding: 8px 14px;
     font-weight: 700;
+    font-size: 0.85rem;
     letter-spacing: 1px;
     transition: all 0.2s ease;
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
@@ -170,11 +171,13 @@ body {
 
 .input-wrapper {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
 .input-wrapper input {
     flex: 1;
+    min-width: 180px;
     background-color: var(--bg-input);
     border: 2px solid var(--border-metal);
     color: #fff;
@@ -455,20 +458,18 @@ body {
 }
 
 .levels-drawer.open {
-    display: block;
+display: block;
 }
-
 .levels-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    text-align: center;
+width: 100%;
+border-collapse: collapse;
+font-size: 0.85rem;
+text-align: center;
 }
-
 .levels-table th {
-    color: var(--accent-cyan);
-    padding: 6px 4px;
-    border-bottom: 1px solid var(--border-metal);
+color: var(--accent-cyan);
+padding: 6px 4px;
+border-bottom: 1px solid var(--border-metal);
 letter-spacing: 1px;
 }
 .levels-table td {
@@ -866,8 +867,649 @@ margin-top: 6px;
 letter-spacing: 1px;
 }
 /* =========================================
+BOTONES DE EXPORTAR / IMPORTAR INVENTARIO
+========================================= */
+.collection-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+margin-top: 12px;
+padding-top: 10px;
+border-top: 1px dashed var(--border-metal);
+justify-content: flex-end;
+}
+.btn-backup {
+background-color: var(--bg-input);
+color: var(--accent-cyan);
+border: 1px solid var(--accent-cyan);
+padding: 6px 12px;
+font-family: var(--font-tech);
+font-size: 0.8rem;
+font-weight: 700;
+cursor: pointer;
+letter-spacing: 0.5px;
+transition: all 0.2s;
+}
+.btn-backup:hover {
+background-color: var(--accent-cyan);
+color: #000;
+}
+.btn-reset-inv {
+color: var(--accent-red);
+border-color: var(--accent-red);
+}
+.btn-reset-inv:hover {
+background-color: var(--accent-red);
+color: #fff;
+}
+.btn-profile-card {
+border-color: var(--accent-yellow);
+color: var(--accent-yellow);
+}
+.btn-profile-card:hover {
+background-color: var(--accent-yellow);
+color: #000;
+}
+/* =========================================
+CONTROL DE POBLACIÓN EN BARRA SUPERIOR
+========================================= */
+.pop-control-box {
+display: flex;
+align-items: center;
+gap: 10px;
+background-color: var(--bg-input);
+border: 1px solid var(--border-metal);
+padding: 4px 10px;
+transition: border-color 0.2s;
+}
+.pop-control-box strong {
+color: var(--accent-cyan);
+}
+.pop-control-box.pop-overlimit {
+border-color: var(--accent-red);
+background-color: rgba(239, 35, 60, 0.15);
+}
+.pop-control-box.pop-overlimit strong {
+color: var(--accent-red);
+}
+.pop-btns {
+display: flex;
+gap: 4px;
+}
+.pop-btns .qty-btn {
+width: auto;
+padding: 0 7px;
+font-size: 0.75rem;
+}
+/* =========================================
+SIMULADOR DE COMBATE 1 VS 1 Y BUSCADOR
+========================================= */
+.simulator-section {
+background-color: #0e1319;
+border-top: 3px solid var(--accent-yellow);
+padding: 4rem 0;
+}
+.simulator-container {
+max-width: 1440px;
+margin: 0 auto;
+padding: 0 2rem;
+}
+.sim-arena {
+display: grid;
+grid-template-columns: 1fr 340px 1fr;
+gap: 1.5rem;
+align-items: stretch;
+}
+.sim-fighter {
+background-color: var(--bg-panel);
+border: 3px solid #000;
+box-shadow: 6px 6px 0px #050709;
+padding: 1.5rem;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+.fighter-blue { border-top: 5px solid var(--accent-cyan); }
+.fighter-red { border-top: 5px solid var(--accent-red); }
+.fighter-badge {
+font-family: var(--font-display);
+font-size: 0.95rem;
+letter-spacing: 1px;
+text-align: center;
+}
+.fighter-blue .fighter-badge { color: var(--accent-cyan); }
+.fighter-red .fighter-badge { color: var(--accent-red); }
+.sim-select, .sim-level-select {
+width: 100%;
+background-color: var(--bg-input);
+color: #fff;
+border: 2px solid var(--border-metal);
+padding: 10px;
+font-family: var(--font-tech);
+font-size: 0.95rem;
+font-weight: 700;
+}
+.sim-select:focus, .sim-level-select:focus {
+outline: none;
+border-color: var(--accent-yellow);
+}
+.sim-level-row {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.sim-level-row label {
+color: var(--accent-yellow);
+font-weight: 700;
+font-size: 0.85rem;
+}
+.sim-img-frame {
+background: radial-gradient(circle, #26323d 0%, #11161b 100%);
+height: 180px;
+display: flex;
+align-items: center;
+justify-content: center;
+border: 2px solid #000;
+padding: 10px;
+}
+.sim-img-frame img {
+max-width: 100%;
+max-height: 100%;
+object-fit: contain;
+filter: drop-shadow(0 6px 6px rgba(0,0,0,0.8));
+}
+.sim-fighter h3 {
+font-family: var(--font-display);
+text-align: center;
+color: #fff;
+font-size: 1.3rem;
+}
+.sim-stats {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 6px;
+margin-top: auto;
+}
+.sim-stat-item {
+background-color: #0e1318;
+border: 1px solid #1e2731;
+padding: 6px 10px;
+display: flex;
+justify-content: space-between;
+font-size: 0.85rem;
+}
+.sim-stat-item span { color: var(--text-muted); font-weight: 700; }
+.sim-stat-item strong { color: #fff; }
+.sim-stat-item.stat-win strong { color: var(--accent-green); }
+.sim-center {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 1.2rem;
+background-color: #11161c;
+border: 2px dashed var(--border-metal);
+padding: 1.5rem;
+}
+.vs-emblem {
+font-family: var(--font-display);
+font-size: 3rem;
+color: var(--accent-yellow);
+text-shadow: 4px 4px 0px #000;
+}
+.btn-simulate {
+width: 100%;
+padding: 14px;
+font-size: 1.1rem;
+}
+.sim-result-box {
+width: 100%;
+background-color: var(--bg-input);
+border: 2px solid var(--border-metal);
+padding: 1rem;
+text-align: center;
+min-height: 150px;
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 8px;
+}
+.sim-placeholder-text {
+color: var(--text-muted);
+font-size: 0.85rem;
+}
+.sim-winner-title {
+font-family: var(--font-display);
+font-size: 1.15rem;
+color: var(--accent-green);
+letter-spacing: 0.5px;
+}
+.sim-detail-line {
+font-size: 0.85rem;
+color: var(--text-main);
+}
+.sim-search-wrapper {
+position: relative;
+width: 100%;
+}
+.sim-search-input {
+width: 100%;
+background-color: var(--bg-input);
+color: #fff;
+border: 2px solid var(--border-metal);
+padding: 10px 12px;
+font-family: var(--font-tech);
+font-size: 0.95rem;
+font-weight: 700;
+}
+.sim-search-input:focus {
+outline: none;
+border-color: var(--accent-yellow);
+}
+.sim-dropdown {
+display: none;
+position: absolute;
+top: 100%;
+left: 0;
+right: 0;
+max-height: 240px;
+overflow-y: auto;
+background-color: #0b0f14;
+border: 2px solid var(--accent-yellow);
+border-top: none;
+z-index: 50;
+box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
+}
+.sim-dropdown.open {
+display: block;
+}
+.sim-option-item {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 8px 12px;
+cursor: pointer;
+border-bottom: 1px solid #182028;
+font-size: 0.9rem;
+color: var(--text-main);
+transition: background 0.15s;
+}
+.sim-option-item:hover {
+background-color: var(--accent-yellow);
+color: #000;
+font-weight: 700;
+}
+.sim-option-item img {
+width: 32px;
+height: 32px;
+object-fit: contain;
+background: #161d24;
+border: 1px solid #000;
+}
+.sim-no-results {
+padding: 10px;
+text-align: center;
+color: var(--text-muted);
+font-size: 0.85rem;
+}
+/* =========================================
+GENERADOR TÁCTICO DE EJÉRCITO
+========================================= */
+.squad-section {
+background-color: #11161d;
+border-top: 3px solid var(--accent-cyan);
+padding: 4rem 0;
+}
+.squad-container {
+max-width: 1440px;
+margin: 0 auto;
+padding: 0 2rem;
+}
+.squad-controls {
+display: flex;
+flex-wrap: wrap;
+align-items: flex-end;
+gap: 1.5rem;
+background-color: var(--bg-panel);
+border: 3px solid #000;
+box-shadow: 6px 6px 0px #050709;
+padding: 1.5rem;
+margin-bottom: 1.5rem;
+}
+.squad-mode-group {
+flex: 1;
+min-width: 260px;
+}
+.squad-mode-group label {
+display: block;
+color: var(--accent-yellow);
+font-weight: 700;
+font-size: 0.85rem;
+margin-bottom: 6px;
+}
+.checkbox-tactical {
+display: flex;
+align-items: center;
+gap: 8px;
+color: var(--text-main);
+font-size: 0.9rem;
+font-weight: 700;
+cursor: pointer;
+padding-bottom: 10px;
+}
+.btn-generate-squad {
+padding: 11px 22px;
+font-size: 1rem;
+}
+.squad-summary {
+display: flex;
+flex-wrap: wrap;
+justify-content: space-between;
+gap: 1rem;
+background-color: #0b0f14;
+border: 2px solid var(--accent-cyan);
+padding: 1rem 1.5rem;
+margin-bottom: 1.5rem;
+}
+.squad-kpi span {
+color: var(--text-muted);
+font-size: 0.85rem;
+font-weight: 700;
+margin-right: 6px;
+}
+.squad-kpi strong {
+color: #fff;
+font-size: 1.15rem;
+}
+.squad-kpi.kpi-highlight strong {
+color: var(--accent-green);
+font-size: 1.3rem;
+}
+.squad-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+gap: 1rem;
+}
+.squad-card {
+background-color: var(--bg-panel);
+border: 2px solid #000;
+border-top: 4px solid var(--accent-green);
+padding: 1rem;
+display: flex;
+flex-direction: column;
+align-items: center;
+text-align: center;
+gap: 8px;
+box-shadow: 4px 4px 0px #050709;
+}
+.squad-qty-badge {
+background-color: var(--accent-yellow);
+color: #000;
+font-family: var(--font-display);
+padding: 3px 10px;
+font-size: 0.95rem;
+align-self: flex-end;
+}
+.squad-card img {
+width: 90px;
+height: 90px;
+object-fit: contain;
+}
+.squad-card h4 {
+font-family: var(--font-display);
+color: #fff;
+font-size: 1rem;
+}
+.squad-card-meta {
+width: 100%;
+display: flex;
+justify-content: space-between;
+font-size: 0.8rem;
+color: var(--text-muted);
+border-top: 1px solid #1f2833;
+padding-top: 6px;
+margin-top: auto;
+}
+.squad-card-meta strong {
+color: var(--accent-cyan);
+}
+/* =========================================
+CAJA DE BOOKMARKLET (DESCARGA DIRECTA)
+========================================= */
+.bookmarklet-box {
+margin-top: 12px;
+padding: 12px 16px;
+background-color: #0b0f14;
+border: 2px dashed var(--accent-cyan);
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+}
+.bookmarklet-badge {
+display: inline-block;
+background-color: var(--accent-cyan);
+color: #000;
+font-family: var(--font-display);
+font-size: 0.75rem;
+padding: 2px 8px;
+margin-bottom: 6px;
+letter-spacing: 0.5px;
+}
+.bookmarklet-info p {
+font-size: 0.88rem;
+color: var(--text-main);
+line-height: 1.5;
+}
+.bookmarklet-sub {
+color: var(--text-muted) !important;
+font-size: 0.82rem !important;
+margin-top: 4px;
+}
+.btn-bookmarklet {
+display: inline-block;
+background-color: var(--accent-yellow);
+color: #000 !important;
+font-family: var(--font-display);
+font-size: 0.85rem;
+padding: 4px 12px;
+border: 2px solid #000;
+box-shadow: 3px 3px 0px #000;
+text-decoration: none;
+cursor: grab;
+margin: 0 4px;
+transition: transform 0.1s;
+}
+.btn-bookmarklet:hover {
+background-color: #ffea00;
+transform: translateY(-1px);
+}
+.btn-bookmarklet:active {
+cursor: grabbing;
+}
+/* =========================================
+ORDENAMIENTO Y COMPARADOR (4 RANURAS)
+========================================= */
+.sort-select {
+background-color: var(--bg-input);
+color: var(--accent-cyan);
+border: 2px solid var(--border-metal);
+padding: 10px 12px;
+font-family: var(--font-tech);
+font-weight: 700;
+font-size: 0.9rem;
+cursor: pointer;
+}
+.sort-select:focus {
+outline: none;
+border-color: var(--accent-yellow);
+}
+.compare-section {
+background-color: #0c1015;
+border-top: 3px solid var(--accent-orange);
+padding: 4rem 0;
+}
+.compare-container {
+max-width: 1440px;
+margin: 0 auto;
+padding: 0 2rem;
+}
+.compare-slots-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 1rem;
+margin-bottom: 1.2rem;
+}
+.compare-slot-box {
+background-color: var(--bg-panel);
+border: 2px solid #000;
+border-top: 4px solid var(--accent-cyan);
+padding: 1rem;
+box-shadow: 4px 4px 0px #050709;
+}
+.compare-slot-box label {
+display: block;
+font-family: var(--font-display);
+color: var(--accent-yellow);
+font-size: 0.85rem;
+margin-bottom: 6px;
+}
+.compare-actions-top {
+display: flex;
+justify-content: flex-end;
+margin-bottom: 1rem;
+}
+.compare-table-wrapper {
+overflow-x: auto;
+background-color: var(--bg-panel);
+border: 3px solid #000;
+box-shadow: 6px 6px 0px #050709;
+padding: 1rem;
+}
+.compare-table {
+width: 100%;
+border-collapse: collapse;
+text-align: center;
+min-width: 600px;
+}
+.compare-table th, .compare-table td {
+padding: 12px 10px;
+border: 1px solid #1f2833;
+}
+.compare-table th {
+background-color: #0e1318;
+color: var(--accent-yellow);
+font-family: var(--font-display);
+font-size: 1rem;
+}
+.compare-table td.metric-label {
+text-align: left;
+font-weight: 700;
+color: var(--accent-cyan);
+background-color: #11161d;
+width: 180px;
+}
+.compare-table td.best-stat {
+background-color: rgba(56, 176, 0, 0.18);
+color: #70e000;
+font-weight: 700;
+}
+.compare-unit-img {
+width: 80px;
+height: 80px;
+object-fit: contain;
+display: block;
+margin: 0 auto 8px auto;
+}
+/* =========================================
+SIMULADOR DE BATALLA GRUPAL
+========================================= */
+.squad-battle-section {
+background-color: #10151c;
+border-top: 3px solid var(--accent-red);
+padding: 4rem 0;
+}
+.group-battle-grid {
+display: grid;
+grid-template-columns: 1fr 310px 1fr;
+gap: 1.5rem;
+align-items: stretch;
+}
+.army-panel {
+background-color: var(--bg-panel);
+border: 3px solid #000;
+box-shadow: 6px 6px 0px #050709;
+padding: 1.2rem;
+display: flex;
+flex-direction: column;
+gap: 10px;
+position: relative;
+}
+.army-quick-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+justify-content: space-between;
+}
+.army-add-row {
+display: flex;
+gap: 6px;
+}
+.army-qty-input {
+width: 65px;
+background-color: var(--bg-input);
+color: var(--accent-yellow);
+border: 2px solid var(--border-metal);
+text-align: center;
+font-weight: 700;
+font-family: var(--font-tech);
+}
+.army-roster {
+background-color: #0b0f14;
+border: 1px solid var(--border-metal);
+min-height: 190px;
+max-height: 260px;
+overflow-y: auto;
+padding: 10px;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.roster-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+background-color: #141b23;
+padding: 6px 10px;
+border-left: 3px solid var(--accent-cyan);
+font-size: 0.85rem;
+}
+.army-totals {
+background-color: #080a0d;
+border: 1px solid var(--accent-yellow);
+color: var(--accent-yellow);
+padding: 8px;
+text-align: center;
+font-weight: 700;
+font-size: 0.85rem;
+margin-top: auto;
+}
+/* =========================================
 RESPONSIVE (TABLETS Y CELULARES)
 ========================================= */
+@media (max-width: 1024px) {
+.sim-arena, .group-battle-grid {
+grid-template-columns: 1fr;
+}
+.compare-slots-grid {
+grid-template-columns: repeat(2, 1fr);
+}
+.simulator-container {
+padding-left: 1rem;
+padding-right: 1rem;
+}
+}
 @media (max-width: 900px) {
 .panel-grid, .community-grid {
 grid-template-columns: 1fr;
@@ -889,7 +1531,7 @@ width: 100%;
 width: 100%;
 text-align: center;
 }
-.control-panel, .wiki-container, .community-container, .factions-container {
+.control-panel, .wiki-container, .community-container, .factions-container, .compare-container, .squad-container {
 padding-left: 1rem;
 padding-right: 1rem;
 }
@@ -920,549 +1562,19 @@ text-align: center;
 .pagination {
 flex-wrap: wrap;
 }
-}
-/* =========================================
-   BOTONES DE EXPORTAR / IMPORTAR INVENTARIO
-   ========================================= */
 .collection-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-metal);
-    justify-content: flex-end;
+justify-content: stretch;
 }
-
 .btn-backup {
-    background-color: var(--bg-input);
-    color: var(--accent-cyan);
-    border: 1px solid var(--accent-cyan);
-    padding: 6px 12px;
-    font-family: var(--font-tech);
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: all 0.2s;
+flex: 1;
+text-align: center;
 }
-
-.btn-backup:hover {
-    background-color: var(--accent-cyan);
-    color: #000;
 }
-
-.btn-reset-inv {
-    color: var(--accent-red);
-    border-color: var(--accent-red);
+@media (max-width: 600px) {
+.compare-slots-grid {
+grid-template-columns: 1fr;
 }
-
-.btn-reset-inv:hover {
-    background-color: var(--accent-red);
-    color: #fff;
 }
-
-@media (max-width: 768px) {
-    .collection-actions {
-        justify-content: stretch;
-    }
-    .btn-backup {
-        flex: 1;
-        text-align: center;
-    }
-}
-/* =========================================
-   CONTROL DE POBLACIÓN EN BARRA SUPERIOR
-   ========================================= */
-.pop-control-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background-color: var(--bg-input);
-    border: 1px solid var(--border-metal);
-    padding: 4px 10px;
-    transition: border-color 0.2s;
-}
-
-.pop-control-box strong {
-    color: var(--accent-cyan);
-}
-
-.pop-control-box.pop-overlimit {
-    border-color: var(--accent-red);
-    background-color: rgba(239, 35, 60, 0.15);
-}
-
-.pop-control-box.pop-overlimit strong {
-    color: var(--accent-red);
-}
-
-.pop-btns {
-    display: flex;
-    gap: 4px;
-}
-
-.pop-btns .qty-btn {
-    width: auto;
-    padding: 0 7px;
-    font-size: 0.75rem;
-}
-/* =========================================
-   SIMULADOR DE COMBATE 1 VS 1
-   ========================================= */
-.simulator-section {
-    background-color: #0e1319;
-    border-top: 3px solid var(--accent-yellow);
-    padding: 4rem 0;
-}
-
-.simulator-container {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-
-.sim-arena {
-    display: grid;
-    grid-template-columns: 1fr 340px 1fr;
-    gap: 1.5rem;
-    align-items: stretch;
-}
-
-.sim-fighter {
-    background-color: var(--bg-panel);
-    border: 3px solid #000;
-    box-shadow: 6px 6px 0px #050709;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.fighter-blue { border-top: 5px solid var(--accent-cyan); }
-.fighter-red { border-top: 5px solid var(--accent-red); }
-
-.fighter-badge {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    letter-spacing: 1px;
-    text-align: center;
-}
-
-.fighter-blue .fighter-badge { color: var(--accent-cyan); }
-.fighter-red .fighter-badge { color: var(--accent-red); }
-
-.sim-select, .sim-level-select {
-    width: 100%;
-    background-color: var(--bg-input);
-    color: #fff;
-    border: 2px solid var(--border-metal);
-    padding: 10px;
-    font-family: var(--font-tech);
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.sim-select:focus, .sim-level-select:focus {
-    outline: none;
-    border-color: var(--accent-yellow);
-}
-
-.sim-level-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sim-level-row label {
-    color: var(--accent-yellow);
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-
-.sim-img-frame {
-    background: radial-gradient(circle, #26323d 0%, #11161b 100%);
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #000;
-    padding: 10px;
-}
-
-.sim-img-frame img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 6px 6px rgba(0,0,0,0.8));
-}
-
-.sim-fighter h3 {
-    font-family: var(--font-display);
-    text-align: center;
-    color: #fff;
-    font-size: 1.3rem;
-}
-
-.sim-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    margin-top: auto;
-}
-
-.sim-stat-item {
-    background-color: #0e1318;
-    border: 1px solid #1e2731;
-    padding: 6px 10px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-}
-
-.sim-stat-item span { color: var(--text-muted); font-weight: 700; }
-.sim-stat-item strong { color: #fff; }
-.sim-stat-item.stat-win strong { color: var(--accent-green); }
-
-/* Centro VS */
-.sim-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1.2rem;
-    background-color: #11161c;
-    border: 2px dashed var(--border-metal);
-    padding: 1.5rem;
-}
-
-.vs-emblem {
-    font-family: var(--font-display);
-    font-size: 3rem;
-    color: var(--accent-yellow);
-    text-shadow: 4px 4px 0px #000;
-}
-
-.btn-simulate {
-    width: 100%;
-    padding: 14px;
-    font-size: 1.1rem;
-}
-
-.sim-result-box {
-    width: 100%;
-    background-color: var(--bg-input);
-    border: 2px solid var(--border-metal);
-    padding: 1rem;
-    text-align: center;
-    min-height: 150px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 8px;
-}
-
-.sim-placeholder-text {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-.sim-winner-title {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    color: var(--accent-green);
-    letter-spacing: 0.5px;
-}
-
-.sim-detail-line {
-    font-size: 0.85rem;
-    color: var(--text-main);
-}
-
-@media (max-width: 1024px) {
-    .sim-arena {
-        grid-template-columns: 1fr;
-    }
-    .simulator-container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-}
-/* =========================================
-   BUSCADOR INTERACTIVO DEL SIMULADOR
-   ========================================= */
-.sim-search-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.sim-search-input {
-    width: 100%;
-    background-color: var(--bg-input);
-    color: #fff;
-    border: 2px solid var(--border-metal);
-    padding: 10px 12px;
-    font-family: var(--font-tech);
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.sim-search-input:focus {
-    outline: none;
-    border-color: var(--accent-yellow);
-}
-
-.sim-dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    max-height: 240px;
-    overflow-y: auto;
-    background-color: #0b0f14;
-    border: 2px solid var(--accent-yellow);
-    border-top: none;
-    z-index: 50;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9);
-}
-
-.sim-dropdown.open {
-    display: block;
-}
-
-.sim-option-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #182028;
-    font-size: 0.9rem;
-    color: var(--text-main);
-    transition: background 0.15s;
-}
-
-.sim-option-item:hover {
-    background-color: var(--accent-yellow);
-    color: #000;
-    font-weight: 700;
-}
-
-.sim-option-item img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-    background: #161d24;
-    border: 1px solid #000;
-}
-
-.sim-no-results {
-    padding: 10px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-/* =========================================
-   GENERADOR TÁCTICO DE EJÉRCITO
-   ========================================= */
-.squad-section {
-    background-color: #11161d;
-    border-top: 3px solid var(--accent-cyan);
-    padding: 4rem 0;
-}
-
-.squad-container {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-
-.squad-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 1.5rem;
-    background-color: var(--bg-panel);
-    border: 3px solid #000;
-    box-shadow: 6px 6px 0px #050709;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.squad-mode-group {
-    flex: 1;
-    min-width: 260px;
-}
-
-.squad-mode-group label {
-    display: block;
-    color: var(--accent-yellow);
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 6px;
-}
-
-.checkbox-tactical {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-main);
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    padding-bottom: 10px;
-}
-
-.btn-generate-squad {
-    padding: 11px 22px;
-    font-size: 1rem;
-}
-
-.squad-summary {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 1rem;
-    background-color: #0b0f14;
-    border: 2px solid var(--accent-cyan);
-    padding: 1rem 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.squad-kpi span {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-right: 6px;
-}
-
-.squad-kpi strong {
-    color: #fff;
-    font-size: 1.15rem;
-}
-
-.squad-kpi.kpi-highlight strong {
-    color: var(--accent-green);
-    font-size: 1.3rem;
-}
-
-.squad-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.squad-card {
-    background-color: var(--bg-panel);
-    border: 2px solid #000;
-    border-top: 4px solid var(--accent-green);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 8px;
-    box-shadow: 4px 4px 0px #050709;
-}
-
-.squad-qty-badge {
-    background-color: var(--accent-yellow);
-    color: #000;
-    font-family: var(--font-display);
-    padding: 3px 10px;
-    font-size: 0.95rem;
-    align-self: flex-end;
-}
-
-.squad-card img {
-    width: 90px;
-    height: 90px;
-    object-fit: contain;
-}
-
-.squad-card h4 {
-    font-family: var(--font-display);
-    color: #fff;
-    font-size: 1rem;
-}
-
-.squad-card-meta {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    border-top: 1px solid #1f2833;
-    padding-top: 6px;
-    margin-top: auto;
-}
-
-.squad-card-meta strong {
-    color: var(--accent-cyan);
-}
-/* =========================================
-   CAJA DE BOOKMARKLET (DESCARGA DIRECTA)
-   ========================================= */
-.bookmarklet-box {
-    margin-top: 12px;
-    padding: 12px 16px;
-    background-color: #0b0f14;
-    border: 2px dashed var(--accent-cyan);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.bookmarklet-badge {
-    display: inline-block;
-    background-color: var(--accent-cyan);
-    color: #000;
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-}
-
-.bookmarklet-info p {
-    font-size: 0.88rem;
-    color: var(--text-main);
-    line-height: 1.5;
-}
-
-.bookmarklet-sub {
-    color: var(--text-muted) !important;
-    font-size: 0.82rem !important;
-    margin-top: 4px;
-}
-
-.btn-bookmarklet {
-    display: inline-block;
-    background-color: var(--accent-yellow);
-    color: #000 !important;
-    font-family: var(--font-display);
-    font-size: 0.85rem;
-    padding: 4px 12px;
-    border: 2px solid #000;
-    box-shadow: 3px 3px 0px #000;
-    text-decoration: none;
-    cursor: grab;
-    margin: 0 4px;
-    transition: transform 0.1s;
-}
-
-.btn-bookmarklet:hover {
-    background-color: #ffea00;
-    transform: translateY(-1px);
-}
-
-.btn-bookmarklet:active {
-    cursor: grabbing;
-}
-
 </style>
 </head>
 <body>
@@ -1481,6 +1593,8 @@ flex-wrap: wrap;
              <a href="#facciones" class="nav-btn">FACCIONES</a>
              <a href="#simulador" class="nav-btn">SIMULADOR 1V1</a>
              <a href="#recomendador" class="nav-btn">ESCUADRÓN ÓPTIMO</a>
+             <a href="#comparador" class="nav-btn">COMPARADOR</a>
+             <a href="#batalla-grupal" class="nav-btn">BATALLA GRUPAL</a>
              <a href="#aportes" class="nav-btn btn-warning">APORTES COMUNIDAD</a>
          </nav>
         </div>
@@ -1488,6 +1602,16 @@ flex-wrap: wrap;
 
     <!-- PANEL DE CONTROL Y FILTROS -->
     <section class="control-panel" id="base-datos">
+        <select id="sort-select" class="sort-select" title="Ordenar unidades">
+            <option value="id_asc">ORDEN: ID (DEFECTO)</option>
+            <option value="fc_desc">MAYOR FUERZA COMBATE</option>
+            <option value="vida_desc">MAYOR VIDA</option>
+            <option value="ataque_desc">MAYOR ATAQUE</option>
+            <option value="rango_desc">MAYOR RANGO</option>
+            <option value="eficiencia_desc">MEJOR EFICIENCIA (FC/POB)</option>
+            <option value="pob_asc">MENOR POBLACIÓN</option>
+        </select>
+
         <div class="panel-grid">
             <div>
                 <label for="search-input">BUSCAR UNIDAD / FACCIÓN / ID:</label>
@@ -1551,6 +1675,7 @@ flex-wrap: wrap;
                 <div class="progress-fill" id="collection-progress-fill" style="width: 0%;"></div>
             </div>
             <div class="collection-actions">
+                <button type="button" class="btn-backup btn-profile-card" id="btn-gen-profile-card">🪪 GENERAR FICHA PNG</button>
                 <button type="button" class="btn-backup" id="btn-export-inv">⬇ EXPORTAR PROGRESO</button>
                 <button type="button" class="btn-backup" id="btn-import-inv">⬆ IMPORTAR PROGRESO</button>
                 <button type="button" class="btn-backup btn-reset-inv" id="btn-reset-inv">🗑 LIMPIAR TODO</button>
@@ -1699,6 +1824,156 @@ flex-wrap: wrap;
 
          <div class="squad-grid" id="squad-grid">
              <p class="sim-placeholder-text">Carga tu inventario (manual o importando tu partida), ajusta tu población máxima arriba y presiona <strong>GENERAR EJÉRCITO RECOMENDADO</strong>.</p>
+         </div>
+     </div>
+ </section>
+
+    <!-- SECCIÓN DE COMPARADOR LADO A LADO (4 RANURAS CON BUSCADOR Y NIVEL) -->
+    <section class="compare-section" id="comparador">
+        <div class="compare-container">
+            <div class="section-header">
+                <h2>COMPARADOR TÁCTICO LADO A LADO</h2>
+                <span class="counter-badge" id="compare-badge">0 / 4 ACTIVOS</span>
+            </div>
+            <p class="section-desc">Busca y selecciona hasta 4 unidades directamente en cada ranura y ajusta su nivel para comparar sus estadísticas.</p>
+
+            <!-- 4 RANURAS DE SELECCIÓN DIRECTA -->
+            <div class="compare-slots-grid">
+                <div class="compare-slot-box">
+                    <label>RANURA 1</label>
+                    <div class="sim-search-wrapper">
+                        <input type="text" id="comp-search-1" class="sim-search-input" placeholder="Buscar unidad..." autocomplete="off">
+                        <input type="hidden" id="comp-id-1">
+                        <div class="sim-dropdown" id="comp-dropdown-1"></div>
+                    </div>
+                    <select id="comp-level-1" class="sim-level-select" style="margin-top: 6px; padding: 6px;">
+                        <option value="1">NVL 1 (BASE)</option><option value="2">NVL 2</option><option value="3">NVL 3</option>
+                        <option value="4">NVL 4</option><option value="5">NVL 5</option><option value="6">NVL 6</option>
+                        <option value="7">NVL 7</option><option value="8">NVL 8</option><option value="9">NVL 9</option>
+                        <option value="10">NVL 10 (MÁX)</option>
+                    </select>
+                </div>
+
+                <div class="compare-slot-box">
+                    <label>RANURA 2</label>
+                    <div class="sim-search-wrapper">
+                        <input type="text" id="comp-search-2" class="sim-search-input" placeholder="Buscar unidad..." autocomplete="off">
+                        <input type="hidden" id="comp-id-2">
+                        <div class="sim-dropdown" id="comp-dropdown-2"></div>
+                    </div>
+                    <select id="comp-level-2" class="sim-level-select" style="margin-top: 6px; padding: 6px;">
+                        <option value="1">NVL 1 (BASE)</option><option value="2">NVL 2</option><option value="3">NVL 3</option>
+                        <option value="4">NVL 4</option><option value="5">NVL 5</option><option value="6">NVL 6</option>
+                        <option value="7">NVL 7</option><option value="8">NVL 8</option><option value="9">NVL 9</option>
+                        <option value="10">NVL 10 (MÁX)</option>
+                    </select>
+                </div>
+
+                <div class="compare-slot-box">
+                    <label>RANURA 3</label>
+                    <div class="sim-search-wrapper">
+                        <input type="text" id="comp-search-3" class="sim-search-input" placeholder="Buscar unidad..." autocomplete="off">
+                        <input type="hidden" id="comp-id-3">
+                        <div class="sim-dropdown" id="comp-dropdown-3"></div>
+                    </div>
+                    <select id="comp-level-3" class="sim-level-select" style="margin-top: 6px; padding: 6px;">
+                        <option value="1">NVL 1 (BASE)</option><option value="2">NVL 2</option><option value="3">NVL 3</option>
+                        <option value="4">NVL 4</option><option value="5">NVL 5</option><option value="6">NVL 6</option>
+                        <option value="7">NVL 7</option><option value="8">NVL 8</option><option value="9">NVL 9</option>
+                        <option value="10">NVL 10 (MÁX)</option>
+                    </select>
+                </div>
+
+                <div class="compare-slot-box">
+                    <label>RANURA 4</label>
+                    <div class="sim-search-wrapper">
+                        <input type="text" id="comp-search-4" class="sim-search-input" placeholder="Buscar unidad..." autocomplete="off">
+                        <input type="hidden" id="comp-id-4">
+                        <div class="sim-dropdown" id="comp-dropdown-4"></div>
+                    </div>
+                    <select id="comp-level-4" class="sim-level-select" style="margin-top: 6px; padding: 6px;">
+                        <option value="1">NVL 1 (BASE)</option><option value="2">NVL 2</option><option value="3">NVL 3</option>
+                        <option value="4">NVL 4</option><option value="5">NVL 5</option><option value="6">NVL 6</option>
+                        <option value="7">NVL 7</option><option value="8">NVL 8</option><option value="9">NVL 9</option>
+                        <option value="10">NVL 10 (MÁX)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="compare-actions-top">
+                <button type="button" class="btn-backup btn-reset-inv" id="btn-clear-compare">🗑 VACIAR COMPARADOR</button>
+            </div>
+
+            <div class="compare-table-wrapper" id="compare-wrapper">
+                <p class="sim-placeholder-text">Selecciona unidades en las ranuras de arriba para ver su tabla comparativa.</p>
+            </div>
+        </div>
+    </section>
+
+ <!-- SECCIÓN DE SIMULADOR DE BATALLA GRUPAL (EJÉRCITO VS EJÉRCITO) -->
+ <section class="squad-battle-section" id="batalla-grupal">
+     <div class="simulator-container">
+         <div class="section-header">
+             <h2>SIMULADOR DE BATALLA GRUPAL (EJÉRCITO VS. EJÉRCITO)</h2>
+             <span class="counter-badge">COMBATE DE ESCUADRONES</span>
+         </div>
+         <p class="section-desc">Carga tu <strong>Escuadrón Óptimo generado</strong> o arma dos ejércitos personalizados para simular un choque masivo.</p>
+
+         <div class="group-battle-grid">
+             <!-- EJÉRCITO ALIADO -->
+             <div class="army-panel fighter-blue">
+                 <div class="fighter-badge">EJÉRCITO ALIADO (AZUL)</div>
+                 <div class="army-quick-actions">
+                     <button type="button" class="btn-backup" id="btn-load-optimal-army">⚡ CARGAR MI ESCUADRÓN ÓPTIMO</button>
+                     <button type="button" class="btn-backup btn-reset-inv" id="btn-clear-army-1">LIMPIAR</button>
+                 </div>
+                 <div class="army-add-row">
+                     <input type="text" id="army1-search" class="sim-search-input" placeholder="Buscar unidad para añadir...">
+                     <input type="number" id="army1-qty" class="army-qty-input" value="1" min="1" max="50">
+                     <button type="button" class="btn-tactical" id="btn-add-army-1">+ AÑADIR</button>
+                 </div>
+                 <div class="sim-dropdown" id="army1-dropdown"></div>
+                 <input type="hidden" id="army1-selected-id">
+                 <div class="army-roster" id="army1-roster">
+                     <p class="sim-placeholder-text">Ejército vacío. Añade tropas o carga tu Escuadrón Óptimo.</p>
+                 </div>
+                 <div class="army-totals" id="army1-totals">VIDA TOTAL: 0 | DPS: 0 | FC: 0</div>
+             </div>
+
+             <!-- PANEL CENTRAL DE RESULTADO GRUPAL -->
+             <div class="sim-center">
+                 <div class="vs-emblem">VS</div>
+                 <button type="button" class="btn-tactical btn-simulate" id="btn-run-group-battle">⚔ SIMULAR GUERRA</button>
+                 <div class="sim-result-box" id="group-battle-result">
+                     <p class="sim-placeholder-text">Arma ambos ejércitos y pulsa <strong>SIMULAR GUERRA</strong> para calcular el desenlace.</p>
+                 </div>
+             </div>
+
+             <!-- EJÉRCITO ENEMIGO -->
+             <div class="army-panel fighter-red">
+                 <div class="fighter-badge">EJÉRCITO ENEMIGO (ROJO)</div>
+                                     <div class="army-quick-actions">
+                        <select id="ai-difficulty" class="sim-level-select" style="padding: 6px 8px; font-size: 0.8rem;" title="Dificultad de la IA">
+                            <option value="0.75">IA: FÁCIL (75% FC)</option>
+                            <option value="1.00" selected>IA: NORMAL (100% FC)</option>
+                            <option value="1.20">IA: DIFÍCIL (120% FC)</option>
+                            <option value="1.50">IA: PESADILLA (150% FC)</option>
+                        </select>
+                        <button type="button" class="btn-backup" id="btn-load-boss-army">🔥 GENERAR IA</button>
+                        <button type="button" class="btn-backup btn-reset-inv" id="btn-clear-army-2">LIMPIAR</button>
+                    </div>
+                 <div class="army-add-row">
+                     <input type="text" id="army2-search" class="sim-search-input" placeholder="Buscar unidad enemiga...">
+                     <input type="number" id="army2-qty" class="army-qty-input" value="1" min="1" max="50">
+                     <button type="button" class="btn-tactical" id="btn-add-army-2">+ AÑADIR</button>
+                 </div>
+                 <div class="sim-dropdown" id="army2-dropdown"></div>
+                 <input type="hidden" id="army2-selected-id">
+                 <div class="army-roster" id="army2-roster">
+                     <p class="sim-placeholder-text">Ejército vacío. Añade tropas o genera un ejército enemigo de élite.</p>
+                 </div>
+                 <div class="army-totals" id="army2-totals">VIDA TOTAL: 0 | DPS: 0 | FC: 0</div>
+             </div>
          </div>
      </div>
  </section>
@@ -14863,6 +15138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let unidadesFiltradas = UNIDADES_DATA;
     let paginaActual = 1;
     const porPagina = 20;
+    let ultimoEscuadronOptimo = [];
 
     // Límite de población guardado (de 5 en 5, mínimo 0, máximo 450)
     const popGuardada = localStorage.getItem("sw_codex_pop_max");
@@ -15206,6 +15482,28 @@ return reg && ((reg.almacen || 0) + (reg.trabajando || 0) + (reg.mapa || 0)) > 0
 const catUnidad = (u.categoria || "").toUpperCase();
 return catUnidad === categoriaFiltro;
 });
+// Ordenamiento avanzado
+const sortSelect = document.getElementById("sort-select");
+const criterioOrden = sortSelect ? sortSelect.value : "id_asc";
+unidadesFiltradas.sort((a, b) => {
+const sa = a.estadisticas || {};
+const sb = b.estadisticas || {};
+if (criterioOrden === "fc_desc") return (sb.fuerza_combate || 0) - (sa.fuerza_combate || 0);
+if (criterioOrden === "vida_desc") return (sb.vida || 0) - (sa.vida || 0);
+if (criterioOrden === "ataque_desc") return (sb.ataque || 0) - (sa.ataque || 0);
+if (criterioOrden === "rango_desc") return (sb.rango || 0) - (sa.rango || 0);
+if (criterioOrden === "pob_asc") {
+const pa = (sa.poblacion && sa.poblacion > 0) ? sa.poblacion : 9999;
+const pb = (sb.poblacion && sb.poblacion > 0) ? sb.poblacion : 9999;
+return pa - pb;
+}
+if (criterioOrden === "eficiencia_desc") {
+const efa = (sa.poblacion && sa.poblacion > 0) ? ((sa.fuerza_combate || 0) / sa.poblacion) : 0;
+const efb = (sb.poblacion && sb.poblacion > 0) ? ((sb.fuerza_combate || 0) / sb.poblacion) : 0;
+return efb - efa;
+}
+return (parseInt(a.id) || 0) - (parseInt(b.id) || 0);
+});
 paginaActual = 1;
 actualizarVista();
 }
@@ -15335,7 +15633,13 @@ if (!archivo) return;
 const lector = new FileReader();
 lector.onload = (evento) => {
 try {
-const datosImportados = JSON.parse(evento.target.result);
+let textoCrudo = String(evento.target.result || "").trim();
+const inicioJson = textoCrudo.indexOf("{");
+const finJson = textoCrudo.lastIndexOf("}");
+if (inicioJson !== -1 && finJson !== -1 && finJson > inicioJson) {
+textoCrudo = textoCrudo.slice(inicioJson, finJson + 1);
+}
+const datosImportados = JSON.parse(textoCrudo);
 if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
 throw new Error("Formato inválido");
 }
@@ -15793,6 +16097,7 @@ document.getElementById("sq-used-pop").textContent = pobUsada + " / " + poblacio
 document.getElementById("sq-total-fc").textContent = fcTotal.toLocaleString();
 squadGridEl.innerHTML = "";
 const listaFinal = Object.values(agrupadas).sort((a, b) => (b.fcUnit * b.cantidad) - (a.fcUnit * a.cantidad));
+ultimoEscuadronOptimo = listaFinal;
 listaFinal.forEach(grupo => {
 const u = grupo.unidad;
 const card = crearElemento("div", "squad-card");
@@ -15814,32 +16119,424 @@ squadGridEl.appendChild(card);
 if (btnGenerateSquad) {
 btnGenerateSquad.addEventListener("click", generarRecomendacionEjercito);
 }
-    // =========================================
-    // COPIAR CÓDIGO DEL BOOKMARKLET AL PORTAPAPELES
-    // =========================================
-    const btnCopyBookmarklet = document.getElementById("btn-copy-bookmarklet");
-    const linkBookmarklet = document.querySelector(".btn-bookmarklet");
-
-    if (btnCopyBookmarklet && linkBookmarklet) {
-        btnCopyBookmarklet.addEventListener("click", () => {
-            const codigo = linkBookmarklet.getAttribute("href");
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(codigo).then(() => {
-                    const textoOriginal = btnCopyBookmarklet.textContent;
-                    btnCopyBookmarklet.textContent = "✅ ¡CÓDIGO COPIADO!";
-                    alert("¡Código copiado! Crea un nuevo marcador en tu navegador, ponle de nombre 'Extraer Partida SW' y pega este código en el campo URL / Dirección.");
-                    setTimeout(() => {
-                        btnCopyBookmarklet.textContent = textoOriginal;
-                    }, 2500);
-                }).catch(() => {
-                    prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
-                });
-            } else {
-                prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
-            }
-        });
-    }
-
+// =========================================
+// COMPARADOR LADO A LADO (4 RANURAS CON BUSCADOR Y NIVEL)
+// =========================================
+const sortSelectEl = document.getElementById("sort-select");
+if (sortSelectEl) sortSelectEl.addEventListener("change", filtrar);
+function configurarRanuraComparador(slot) {
+const inputEl = document.getElementById("comp-search-" + slot);
+const hiddenIdEl = document.getElementById("comp-id-" + slot);
+const dropdownEl = document.getElementById("comp-dropdown-" + slot);
+const levelEl = document.getElementById("comp-level-" + slot);
+if (!inputEl || !hiddenIdEl || !dropdownEl) return;
+function mostrarOpciones(filtroTexto) {
+dropdownEl.innerHTML = "";
+const termino = filtroTexto.toLowerCase().trim();
+const coincidencias = todasLasUnidades.filter(u =>
+u.estadisticas &&
+(u.nombre.toLowerCase().includes(termino) ||
+String(u.id).includes(termino) ||
+(u.faccion && u.faccion.toLowerCase().includes(termino)))
+).slice(0, 30);
+if (coincidencias.length === 0) {
+dropdownEl.appendChild(crearElemento("div", "sim-no-results", "Sin coincidencias"));
+} else {
+coincidencias.forEach(u => {
+const item = crearElemento("div", "sim-option-item");
+if (u.imagen_ruta) {
+const miniImg = document.createElement("img");
+miniImg.src = u.imagen_ruta;
+miniImg.alt = u.nombre;
+item.appendChild(miniImg);
+}
+item.appendChild(crearElemento("span", "", "#" + u.id + " - " + u.nombre));
+item.addEventListener("mousedown", (e) => {
+e.preventDefault();
+hiddenIdEl.value = String(u.id);
+inputEl.value = "#" + u.id + " - " + u.nombre;
+dropdownEl.classList.remove("open");
+renderizarComparador();
+});
+dropdownEl.appendChild(item);
+});
+}
+dropdownEl.classList.add("open");
+}
+inputEl.addEventListener("focus", () => {
+inputEl.select();
+mostrarOpciones("");
+});
+inputEl.addEventListener("input", () => mostrarOpciones(inputEl.value));
+inputEl.addEventListener("blur", () => setTimeout(() => dropdownEl.classList.remove("open"), 150));
+if (levelEl) levelEl.addEventListener("change", renderizarComparador);
+}
+[1, 2, 3, 4].forEach(slot => configurarRanuraComparador(slot));
+const btnClearCompare = document.getElementById("btn-clear-compare");
+if (btnClearCompare) {
+btnClearCompare.addEventListener("click", () => {
+[1, 2, 3, 4].forEach(slot => {
+const inp = document.getElementById("comp-search-" + slot);
+const hid = document.getElementById("comp-id-" + slot);
+const lvl = document.getElementById("comp-level-" + slot);
+if (inp) inp.value = "";
+if (hid) hid.value = "";
+if (lvl) lvl.value = "1";
+});
+renderizarComparador();
+});
+}
+function renderizarComparador() {
+const wrapper = document.getElementById("compare-wrapper");
+const badge = document.getElementById("compare-badge");
+if (!wrapper) return;
+const seleccionadas = [];
+[1, 2, 3, 4].forEach(slot => {
+const uid = document.getElementById("comp-id-" + slot)?.value;
+const nvl = parseInt(document.getElementById("comp-level-" + slot)?.value) || 1;
+if (uid && mapaUnidades[uid]) {
+seleccionadas.push({ slot, unidad: mapaUnidades[uid], nivel: nvl });
+}
+});
+if (badge) badge.textContent = seleccionadas.length + " / 4 ACTIVOS";
+if (seleccionadas.length === 0) {
+wrapper.innerHTML = 'Selecciona unidades en las ranuras de arriba para ver su tabla comparativa.';
+return;
+}
+const metricas = [
+{ label: "VIDA (SEGÚN NIVEL)", get: item => obtenerStatsPorNivel(item.unidad, item.nivel).vida, max: true },
+{ label: "ATAQUE (SEGÚN NIVEL)", get: item => obtenerStatsPorNivel(item.unidad, item.nivel).ataque, max: true },
+{ label: "RANGO", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.rango) || 0, max: true },
+{ label: "VELOCIDAD", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.velocidad) || 0, max: true },
+{ label: "ELABORACIÓN (SEG)", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.elaboracion) || 0, max: false },
+{ label: "POBLACIÓN", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.poblacion) || 0, max: false },
+{ label: "FUERZA DE COMBATE", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0, max: true },
+{
+label: "EFICIENCIA (FC / POB)",
+get: item => {
+const p = (item.unidad.estadisticas && item.unidad.estadisticas.poblacion) || 0;
+const f = (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0;
+return p > 0 ? Math.round(f / p) : 0;
+},
+max: true
+}
+];
+const tabla = crearElemento("table", "compare-table");
+const thead = crearElemento("thead");
+const trHead = crearElemento("tr");
+trHead.appendChild(crearElemento("th", "", "ATRIBUTO"));
+seleccionadas.forEach(item => {
+const u = item.unidad;
+const th = crearElemento("th");
+if (u.imagen_ruta) {
+const img = document.createElement("img");
+img.src = u.imagen_ruta;
+img.className = "compare-unit-img";
+th.appendChild(img);
+}
+th.appendChild(crearElemento("div", "", "#" + u.id + " " + u.nombre + " (NVL " + item.nivel + ")"));
+const btnRem = crearElemento("button", "btn-backup btn-reset-inv", "QUITAR");
+btnRem.style.marginTop = "6px";
+btnRem.onclick = () => {
+document.getElementById("comp-search-" + item.slot).value = "";
+document.getElementById("comp-id-" + item.slot).value = "";
+renderizarComparador();
+};
+th.appendChild(btnRem);
+trHead.appendChild(th);
+});
+thead.appendChild(trHead);
+tabla.appendChild(thead);
+const tbody = crearElemento("tbody");
+metricas.forEach(m => {
+const tr = crearElemento("tr");
+tr.appendChild(crearElemento("td", "metric-label", m.label));
+const valores = seleccionadas.map(item => m.get(item));
+const mejorValor = m.max
+? Math.max(...valores)
+: Math.min(...valores.filter(v => v > 0));
+seleccionadas.forEach((item, idx) => {
+const valNum = valores.at(idx);
+const esMejor = valNum > 0 && valNum === mejorValor && seleccionadas.length > 1;
+const td = crearElemento("td", esMejor ? "best-stat" : "", valNum > 0 ? valNum.toLocaleString() : "---");
+tr.appendChild(td);
+});
+tbody.appendChild(tr);
+});
+tabla.appendChild(tbody);
+wrapper.innerHTML = "";
+wrapper.appendChild(tabla);
+}
+// =========================================
+// GENERADOR DE TARJETA DE PERFIL PNG COMPARTIBLE
+// =========================================
+const btnGenProfileCard = document.getElementById("btn-gen-profile-card");
+if (btnGenProfileCard) {
+btnGenProfileCard.addEventListener("click", () => {
+const alias = prompt("Ingresa tu Alias de Comandante para tu ficha táctica:", "Comandante");
+if (alias === null) return;
+const canvas = document.createElement("canvas");
+canvas.width = 800;
+canvas.height = 440;
+const ctx = canvas.getContext("2d");
+ctx.fillStyle = "#0d1115";
+ctx.fillRect(0, 0, 800, 440);
+ctx.strokeStyle = "#ffb703";
+ctx.lineWidth = 6;
+ctx.strokeRect(10, 10, 780, 420);
+ctx.fillStyle = "#161d24";
+ctx.fillRect(16, 16, 768, 70);
+ctx.fillStyle = "#ffb703";
+ctx.font = "bold 28px Arial Black, sans-serif";
+ctx.fillText("SOCIAL WARS CODEX // EXPEDIENTE TÁCTICO", 32, 60);
+ctx.fillStyle = "#00f5d4";
+ctx.font = "bold 22px sans-serif";
+ctx.fillText("COMANDANTE: " + (alias.trim() || "ANÓNIMO").toUpperCase(), 35, 125);
+const unicos = Object.keys(miColeccion).length;
+let tropas = 0, fcAlm = 0, fcMap = 0;
+const topUnidades = [];
+Object.keys(miColeccion).forEach(id => {
+const r = miColeccion[id];
+const u = mapaUnidades[id];
+const cant = (r.almacen || 0) + (r.trabajando || 0) + (r.mapa || 0);
+if (cant > 0 && u) {
+tropas += cant;
+const fc = (u.estadisticas && u.estadisticas.fuerza_combate) || 0;
+fcAlm += (r.almacen || 0) * fc;
+fcMap += ((r.mapa || 0) + (r.trabajando || 0)) * fc;
+topUnidades.push({ nombre: u.nombre, fc: fc, cant: cant });
+}
+});
+topUnidades.sort((a, b) => b.fc - a.fc);
+ctx.fillStyle = "#ffffff";
+ctx.font = "bold 19px sans-serif";
+ctx.fillText("• COLECCIÓN: " + unicos + " / " + todasLasUnidades.length + " ÚNICOS (" + tropas + " TROPAS)", 35, 170);
+ctx.fillText("• POBLACIÓN MÁXIMA: " + poblacionMaxima + " / 450", 35, 205);
+ctx.fillText("• FC ALMACÉN: " + fcAlm.toLocaleString() + "   |   FC ACTIVA: " + fcMap.toLocaleString(), 35, 240);
+ctx.fillStyle = "#38b000";
+ctx.font = "bold 24px Arial Black, sans-serif";
+ctx.fillText("FUERZA DE COMBATE TOTAL: " + (fcAlm + fcMap).toLocaleString(), 35, 285);
+ctx.fillStyle = "#ffb703";
+ctx.font = "bold 17px sans-serif";
+ctx.fillText("UNIDADES INSIGNIA DEL EJÉRCITO:", 35, 325);
+ctx.fillStyle = "#e2e8f0";
+ctx.font = "16px sans-serif";
+topUnidades.slice(0, 3).forEach((tu, i) => {
+ctx.fillText((i + 1) + ". " + tu.nombre + " (FC: " + tu.fc.toLocaleString() + " • x" + tu.cant + ")", 45, 355 + (i * 24));
+});
+const enlace = document.createElement("a");
+enlace.download = "ficha_socialwars_" + (alias.trim() || "comandante") + ".png";
+enlace.href = canvas.toDataURL("image/png");
+document.body.appendChild(enlace);
+enlace.click();
+enlace.remove();
+});
+}
+// =========================================
+// SIMULADOR DE BATALLA GRUPAL (EJÉRCITO VS EJÉRCITO)
+// =========================================
+let ejercito1 = [];
+let ejercito2 = [];
+function configurarBuscadorEjercito(num) {
+const input = document.getElementById("army" + num + "-search");
+const dropdown = document.getElementById("army" + num + "-dropdown");
+const hiddenId = document.getElementById("army" + num + "-selected-id");
+if (!input || !dropdown || !hiddenId) return;
+input.addEventListener("input", () => {
+const q = input.value.toLowerCase().trim();
+dropdown.innerHTML = "";
+if (!q) {
+dropdown.classList.remove("open");
+return;
+}
+const matches = unidadesCombatientes.filter(u =>
+u.nombre.toLowerCase().includes(q) || String(u.id).includes(q)
+).slice(0, 20);
+matches.forEach(u => {
+const div = crearElemento("div", "sim-option-item", "#" + u.id + " - " + u.nombre);
+div.addEventListener("mousedown", (e) => {
+e.preventDefault();
+hiddenId.value = String(u.id);
+input.value = "#" + u.id + " - " + u.nombre;
+dropdown.classList.remove("open");
+});
+dropdown.appendChild(div);
+});
+dropdown.classList.toggle("open", matches.length > 0);
+});
+input.addEventListener("blur", () => setTimeout(() => dropdown.classList.remove("open"), 150));
+}
+configurarBuscadorEjercito(1);
+configurarBuscadorEjercito(2);
+function renderizarEjercito(num) {
+const lista = num === 1 ? ejercito1 : ejercito2;
+const rosterEl = document.getElementById("army" + num + "-roster");
+const totalsEl = document.getElementById("army" + num + "-totals");
+if (!rosterEl || !totalsEl) return;
+if (lista.length === 0) {
+rosterEl.innerHTML = 'Ejército vacío. Añade tropas arriba.';
+totalsEl.textContent = "VIDA TOTAL: 0 | ATAQUE TOTAL: 0 | FC: 0";
+return;
+}
+rosterEl.innerHTML = "";
+let vidaTotal = 0, ataqueTotal = 0, fcTotal = 0;
+lista.forEach((item, idx) => {
+const st = item.unidad.estadisticas || {};
+const v = (st.vida || 0) * item.cantidad;
+const a = (st.ataque || 0) * item.cantidad;
+const f = (st.fuerza_combate || 0) * item.cantidad;
+vidaTotal += v;
+ataqueTotal += a;
+fcTotal += f;
+const row = crearElemento("div", "roster-item");
+row.appendChild(crearElemento("span", "", "x" + item.cantidad + " " + item.unidad.nombre + " (FC: " + f.toLocaleString() + ")"));
+const btnDel = crearElemento("button", "qty-btn", "×");
+btnDel.onclick = () => {
+lista.splice(idx, 1);
+renderizarEjercito(num);
+};
+row.appendChild(btnDel);
+rosterEl.appendChild(row);
+});
+totalsEl.textContent = "VIDA: " + vidaTotal.toLocaleString() + " | ATAQUE: " + ataqueTotal.toLocaleString() + " | FC: " + fcTotal.toLocaleString();
+}
+[1, 2].forEach(num => {
+const btnAdd = document.getElementById("btn-add-army-" + num);
+const btnClear = document.getElementById("btn-clear-army-" + num);
+if (btnAdd) {
+btnAdd.addEventListener("click", () => {
+const uid = document.getElementById("army" + num + "-selected-id").value;
+const qty = Math.max(1, parseInt(document.getElementById("army" + num + "-qty").value) || 1);
+const u = mapaUnidades[uid];
+if (!u) {
+alert("Primero busca y selecciona una unidad de la lista desplegable.");
+return;
+}
+const lista = num === 1 ? ejercito1 : ejercito2;
+const existente = lista.find(x => String(x.unidad.id) === uid);
+if (existente) existente.cantidad += qty;
+else lista.push({ unidad: u, cantidad: qty });
+renderizarEjercito(num);
+});
+}
+if (btnClear) {
+btnClear.addEventListener("click", () => {
+if (num === 1) ejercito1 = [];
+else ejercito2 = [];
+renderizarEjercito(num);
+});
+}
+});
+const btnLoadOptimalArmy = document.getElementById("btn-load-optimal-army");
+if (btnLoadOptimalArmy) {
+btnLoadOptimalArmy.addEventListener("click", () => {
+if (!ultimoEscuadronOptimo || ultimoEscuadronOptimo.length === 0) {
+alert("Primero genera tu Escuadrón Óptimo en la sección anterior.");
+return;
+}
+ejercito1 = ultimoEscuadronOptimo.map(g => ({ unidad: g.unidad, cantidad: g.cantidad }));
+renderizarEjercito(1);
+});
+}
+const btnLoadBossArmy = document.getElementById("btn-load-boss-army");
+if (btnLoadBossArmy) {
+btnLoadBossArmy.addEventListener("click", () => {
+const diffSelect = document.getElementById("ai-difficulty");
+const multiplicador = diffSelect ? (parseFloat(diffSelect.value) || 1.0) : 1.0;
+let fcAliado = 0;
+ejercito1.forEach(item => {
+const fc = (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0;
+fcAliado += fc * item.cantidad;
+});
+const fcBase = fcAliado > 0 ? fcAliado : 200000;
+const fcObjetivo = Math.round(fcBase * multiplicador);
+const poolSize = multiplicador <= 1.0 ? 45 : 25;
+const topElite = [...unidadesCombatientes]
+.filter(u => (u.estadisticas.fuerza_combate || 0) > 0)
+.sort((a, b) => (b.estadisticas.fuerza_combate || 0) - (a.estadisticas.fuerza_combate || 0))
+.slice(0, poolSize);
+if (topElite.length === 0) return;
+const mapaEnemigo = {};
+let fcAcumulado = 0;
+let intentos = 0;
+while (fcAcumulado < fcObjetivo && intentos < 250) {
+const elegida = topElite[Math.floor(Math.random() * topElite.length)];
+const fcUnit = elegida.estadisticas.fuerza_combate || 0;
+const uid = String(elegida.id);
+if (!mapaEnemigo[uid]) {
+mapaEnemigo[uid] = { unidad: elegida, cantidad: 0 };
+}
+mapaEnemigo[uid].cantidad += 1;
+fcAcumulado += fcUnit;
+intentos++;
+}
+ejercito2 = Object.values(mapaEnemigo).sort(
+(a, b) => ((b.unidad.estadisticas.fuerza_combate || 0) * b.cantidad) - ((a.unidad.estadisticas.fuerza_combate || 0) * a.cantidad)
+);
+renderizarEjercito(2);
+});
+}
+const btnRunGroupBattle = document.getElementById("btn-run-group-battle");
+if (btnRunGroupBattle) {
+btnRunGroupBattle.addEventListener("click", () => {
+const resBox = document.getElementById("group-battle-result");
+if (ejercito1.length === 0 || ejercito2.length === 0) {
+alert("Ambos ejércitos deben tener al menos una unidad.");
+return;
+}
+function calcularPoderGrupal(lista) {
+let hp = 0, dps = 0, rangoProm = 0, total = 0;
+lista.forEach(item => {
+const st = item.unidad.estadisticas || {};
+hp += (st.vida || 0) * item.cantidad;
+dps += (st.ataque || 0) * item.cantidad;
+rangoProm += (st.rango || 1) * item.cantidad;
+total += item.cantidad;
+});
+const bonoAlcance = total > 0 ? 1 + ((rangoProm / total) * 0.03) : 1;
+return { hp, dps: Math.round(dps * bonoAlcance) };
+}
+const p1 = calcularPoderGrupal(ejercito1);
+const p2 = calcularPoderGrupal(ejercito2);
+const turnos1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
+const turnos2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
+resBox.innerHTML = "";
+if (turnos1 < turnos2) {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO AZUL"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al enemigo en " + turnos1 + " oleadas de ataque."));
+} else if (turnos2 < turnos1) {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO ROJO"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al aliado en " + turnos2 + " oleadas de ataque."));
+} else {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "⚔ DESTRUCCIÓN MUTUA"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos ejércitos caen en " + turnos1 + " oleadas."));
+}
+});
+}
+// =========================================
+// COPIAR CÓDIGO DEL BOOKMARKLET AL PORTAPAPELES
+// =========================================
+const btnCopyBookmarklet = document.getElementById("btn-copy-bookmarklet");
+const linkBookmarklet = document.querySelector(".btn-bookmarklet");
+if (btnCopyBookmarklet && linkBookmarklet) {
+btnCopyBookmarklet.addEventListener("click", () => {
+const codigo = linkBookmarklet.getAttribute("href");
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(codigo).then(() => {
+const textoOriginal = btnCopyBookmarklet.textContent;
+btnCopyBookmarklet.textContent = "✅ ¡CÓDIGO COPIADO!";
+alert("¡Código copiado! Crea un nuevo marcador en tu navegador, ponle de nombre 'Extraer Partida SW' y pega este código en el campo URL / Dirección.");
+setTimeout(() => {
+btnCopyBookmarklet.textContent = textoOriginal;
+}, 2500);
+}).catch(() => {
+prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
+});
+} else {
+prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
+}
+});
+}
 actualizarBarraColeccion();
 actualizarVista();
 renderizarFacciones();

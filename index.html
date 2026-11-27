@@ -15115,7 +15115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchBtn = document.querySelector(".btn-tactical");
     const filterBtns = document.querySelectorAll(".filter-btn");
 
-    // Elementos de la barra de colección y Fuerza de Combate
     const ownedUniqueEl = document.getElementById("owned-unique");
     const ownedTotalCatalogEl = document.getElementById("owned-total-catalog");
     const ownedTotalCopiesEl = document.getElementById("owned-total-copies");
@@ -15123,8 +15122,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const fcMapaEl = document.getElementById("fc-mapa");
     const fcTotalEl = document.getElementById("fc-total");
     const progressFillEl = document.getElementById("collection-progress-fill");
-
-    // Elementos del control de Población
     const popUsedEl = document.getElementById("pop-used");
     const popMaxEl = document.getElementById("pop-max");
     const popBoxContainer = document.getElementById("pop-box-container");
@@ -15134,114 +15131,33 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    let todasLasUnidades = UNIDADES_DATA;
-    let unidadesFiltradas = UNIDADES_DATA;
+    const todasLasUnidades = UNIDADES_DATA;
+    let unidadesFiltradas = todasLasUnidades;
     let paginaActual = 1;
     const porPagina = 20;
     let ultimoEscuadronOptimo = [];
 
-    // Límite de población guardado (de 5 en 5, mínimo 0, máximo 450)
     const popGuardada = localStorage.getItem("sw_codex_pop_max");
     let poblacionMaxima = (popGuardada !== null && !isNaN(parseInt(popGuardada))) ? parseInt(popGuardada) : 0;
 
-    // Mapa rápido por ID para consultar Fuerza de Combate y Población
     const mapaUnidades = {};
-    todasLasUnidades.forEach(u => {
-        mapaUnidades[String(u.id)] = u;
-    });
+    todasLasUnidades.forEach(u => { mapaUnidades[String(u.id)] = u; });
 
-    // Cargar inventario { "1001": { almacen: 2, trabajando: 1, mapa: 1 }, ... }
-    let rawColeccion = JSON.parse(localStorage.getItem("sw_codex_coleccion")) || {};
+    const unidadesCombatientes = todasLasUnidades.filter(u =>
+        u.estadisticas && u.estadisticas.vida > 0 && u.estadisticas.ataque > 0
+    );
+
+    const rawColeccion = JSON.parse(localStorage.getItem("sw_codex_coleccion")) || {};
     let miColeccion = {};
-
-    // Compatibilidad automática con datos guardados anteriormente
     Object.keys(rawColeccion).forEach(id => {
         const val = rawColeccion[id];
         if (typeof val === "number" && val > 0) {
             miColeccion[id] = { almacen: val, trabajando: 0, mapa: 0 };
         } else if (val && typeof val === "object") {
-            const a = val.almacen || 0;
-            const t = val.trabajando || 0;
-            const m = val.mapa || 0;
-            if ((a + t + m) > 0) {
-                miColeccion[id] = { almacen: a, trabajando: t, mapa: m };
-            }
+            const a = val.almacen || 0, t = val.trabajando || 0, m = val.mapa || 0;
+            if ((a + t + m) > 0) miColeccion[id] = { almacen: a, trabajando: t, mapa: m };
         }
     });
-
-    function guardarColeccion() {
-        localStorage.setItem("sw_codex_coleccion", JSON.stringify(miColeccion));
-        actualizarBarraColeccion();
-    }
-
-    function actualizarBarraColeccion() {
-        const totalCatalogo = todasLasUnidades.length;
-        let unicos = 0;
-        let copiasTotales = 0;
-        let sumaFcAlmacen = 0;
-        let sumaFcMapa = 0;
-        let sumaPoblacion = 0;
-
-        Object.keys(miColeccion).forEach(id => {
-            const reg = miColeccion[id];
-            const cantAlmacen = reg.almacen || 0;
-            const cantTrabajando = reg.trabajando || 0;
-            const cantMapa = reg.mapa || 0;
-            const totalUnidad = cantAlmacen + cantTrabajando + cantMapa;
-
-            if (totalUnidad > 0) {
-                unicos++;
-                copiasTotales += totalUnidad;
-
-                const unidadObj = mapaUnidades[id];
-                const fcBase = (unidadObj && unidadObj.estadisticas && unidadObj.estadisticas.fuerza_combate)
-                    ? unidadObj.estadisticas.fuerza_combate
-                    : 0;
-                const pobBase = (unidadObj && unidadObj.estadisticas && unidadObj.estadisticas.poblacion)
-                    ? unidadObj.estadisticas.poblacion
-                    : 0;
-
-                sumaFcAlmacen += cantAlmacen * fcBase;
-                // Trabajando suma su FC junto con Mapa, pero NO consume población activa
-                sumaFcMapa += (cantMapa + cantTrabajando) * fcBase;
-                sumaPoblacion += cantMapa * pobBase;
-            }
-        });
-
-        const sumaFcTotal = sumaFcAlmacen + sumaFcMapa;
-
-        if (ownedUniqueEl) ownedUniqueEl.textContent = unicos.toLocaleString();
-        if (ownedTotalCatalogEl) ownedTotalCatalogEl.textContent = totalCatalogo.toLocaleString();
-        if (ownedTotalCopiesEl) ownedTotalCopiesEl.textContent = copiasTotales.toLocaleString();
-
-        if (fcAlmacenEl) fcAlmacenEl.textContent = sumaFcAlmacen.toLocaleString();
-        if (fcMapaEl) fcMapaEl.textContent = sumaFcMapa.toLocaleString();
-        if (fcTotalEl) fcTotalEl.textContent = sumaFcTotal.toLocaleString();
-
-        if (popUsedEl) popUsedEl.textContent = sumaPoblacion.toLocaleString();
-        if (popMaxEl) popMaxEl.textContent = poblacionMaxima.toLocaleString();
-        if (popBoxContainer) {
-            popBoxContainer.classList.toggle("pop-overlimit", sumaPoblacion > poblacionMaxima);
-        }
-
-        if (progressFillEl && totalCatalogo > 0) {
-            const porcentaje = Math.min(100, (unicos / totalCatalogo) * 100);
-            progressFillEl.style.width = porcentaje.toFixed(2) + "%";
-        }
-    }
-
-    const ESCALADO_NIVELES = [
-        { nivel: 1, multVida: 1.0,  sumaAtaque: 0 },
-        { nivel: 2, multVida: 1.2,  sumaAtaque: 2 },
-        { nivel: 3, multVida: 1.4,  sumaAtaque: 4 },
-        { nivel: 4, multVida: 1.6,  sumaAtaque: 7 },
-        { nivel: 5, multVida: 1.8,  sumaAtaque: 10 },
-        { nivel: 6, multVida: 2.0,  sumaAtaque: 14 },
-        { nivel: 7, multVida: 2.25, sumaAtaque: 18 },
-        { nivel: 8, multVida: 2.5,  sumaAtaque: 22 },
-        { nivel: 9, multVida: 2.75, sumaAtaque: 26 },
-        { nivel: 10, multVida: 3.0, sumaAtaque: 30 }
-    ];
 
     function crearElemento(tag, clase, texto) {
         const el = document.createElement(tag);
@@ -15250,35 +15166,129 @@ document.addEventListener("DOMContentLoaded", () => {
         return el;
     }
 
+    function guardarColeccion() {
+        localStorage.setItem("sw_codex_coleccion", JSON.stringify(miColeccion));
+        actualizarBarraColeccion();
+    }
+
+    function actualizarBarraColeccion() {
+        const totalCatalogo = todasLasUnidades.length;
+        let unicos = 0, copiasTotales = 0, sumaFcAlmacen = 0, sumaFcMapa = 0, sumaPoblacion = 0;
+
+        Object.keys(miColeccion).forEach(id => {
+            const reg = miColeccion[id];
+            const cantAlmacen = reg.almacen || 0, cantTrabajando = reg.trabajando || 0, cantMapa = reg.mapa || 0;
+            const totalUnidad = cantAlmacen + cantTrabajando + cantMapa;
+
+            if (totalUnidad > 0) {
+                unicos++;
+                copiasTotales += totalUnidad;
+                const st = (mapaUnidades[id] && mapaUnidades[id].estadisticas) || {};
+                const fcBase = st.fuerza_combate || 0;
+                const pobBase = st.poblacion || 0;
+
+                sumaFcAlmacen += cantAlmacen * fcBase;
+                sumaFcMapa += (cantMapa + cantTrabajando) * fcBase;
+                sumaPoblacion += cantMapa * pobBase;
+            }
+        });
+
+        if (ownedUniqueEl) ownedUniqueEl.textContent = unicos.toLocaleString();
+        if (ownedTotalCatalogEl) ownedTotalCatalogEl.textContent = totalCatalogo.toLocaleString();
+        if (ownedTotalCopiesEl) ownedTotalCopiesEl.textContent = copiasTotales.toLocaleString();
+        if (fcAlmacenEl) fcAlmacenEl.textContent = sumaFcAlmacen.toLocaleString();
+        if (fcMapaEl) fcMapaEl.textContent = sumaFcMapa.toLocaleString();
+        if (fcTotalEl) fcTotalEl.textContent = (sumaFcAlmacen + sumaFcMapa).toLocaleString();
+        if (popUsedEl) popUsedEl.textContent = sumaPoblacion.toLocaleString();
+        if (popMaxEl) popMaxEl.textContent = poblacionMaxima.toLocaleString();
+        if (popBoxContainer) popBoxContainer.classList.toggle("pop-overlimit", sumaPoblacion > poblacionMaxima);
+        if (progressFillEl && totalCatalogo > 0) {
+            progressFillEl.style.width = Math.min(100, (unicos / totalCatalogo) * 100).toFixed(2) + "%";
+        }
+    }
+
+    const ESCALADO_NIVELES = [
+        { nivel: 1, multVida: 1.0, sumaAtaque: 0 }, { nivel: 2, multVida: 1.2, sumaAtaque: 2 },
+        { nivel: 3, multVida: 1.4, sumaAtaque: 4 }, { nivel: 4, multVida: 1.6, sumaAtaque: 7 },
+        { nivel: 5, multVida: 1.8, sumaAtaque: 10 }, { nivel: 6, multVida: 2.0, sumaAtaque: 14 },
+        { nivel: 7, multVida: 2.25, sumaAtaque: 18 }, { nivel: 8, multVida: 2.5, sumaAtaque: 22 },
+        { nivel: 9, multVida: 2.75, sumaAtaque: 26 }, { nivel: 10, multVida: 3.0, sumaAtaque: 30 }
+    ];
+
+    function obtenerStatsPorNivel(unidad, nivel) {
+        const esc = ESCALADO_NIVELES.find(e => e.nivel === nivel) || ESCALADO_NIVELES.at(0);
+        const st = unidad.estadisticas || {};
+        return {
+            vida: Math.round((st.vida || 0) * esc.multVida),
+            ataque: (st.ataque || 0) + esc.sumaAtaque,
+            rango: st.rango || 1,
+            velocidad: st.velocidad || 1,
+            fuerza: st.fuerza_combate || 0
+        };
+    }
+
+    function crearBuscadorUnidades({ inputEl, hiddenEl, dropdownEl, listaOrigen, onSelect, unidadInicial }) {
+        if (!inputEl || !hiddenEl || !dropdownEl) return;
+
+        function seleccionar(u) {
+            hiddenEl.value = String(u.id);
+            inputEl.value = "#" + u.id + " - " + u.nombre;
+            dropdownEl.classList.remove("open");
+            if (onSelect) onSelect(u);
+        }
+
+        function mostrarOpciones(filtro) {
+            dropdownEl.innerHTML = "";
+            const q = filtro.toLowerCase().trim();
+            const matches = listaOrigen.filter(u =>
+                u.nombre.toLowerCase().includes(q) ||
+                String(u.id).includes(q) ||
+                (u.faccion && u.faccion.toLowerCase().includes(q))
+            ).slice(0, 30);
+
+            if (matches.length === 0) {
+                dropdownEl.appendChild(crearElemento("div", "sim-no-results", "Sin coincidencias"));
+            } else {
+                matches.forEach(u => {
+                    const item = crearElemento("div", "sim-option-item");
+                    if (u.imagen_ruta) {
+                        const img = document.createElement("img");
+                        img.src = u.imagen_ruta;
+                        img.alt = u.nombre;
+                        item.appendChild(img);
+                    }
+                    item.appendChild(crearElemento("span", "", "#" + u.id + " - " + u.nombre));
+                    item.addEventListener("mousedown", (e) => {
+                        e.preventDefault();
+                        seleccionar(u);
+                    });
+                    dropdownEl.appendChild(item);
+                });
+            }
+            dropdownEl.classList.add("open");
+        }
+
+        inputEl.addEventListener("focus", () => { inputEl.select(); mostrarOpciones(""); });
+        inputEl.addEventListener("input", () => mostrarOpciones(inputEl.value));
+        inputEl.addEventListener("blur", () => setTimeout(() => dropdownEl.classList.remove("open"), 150));
+        if (unidadInicial) seleccionar(unidadInicial);
+    }
+
     function construirTablaNiveles(contenedor, vidaBase, ataqueBase) {
-        if (vidaBase === null || vidaBase === undefined || ataqueBase === null || ataqueBase === undefined) {
+        if (vidaBase == null || ataqueBase == null) {
             contenedor.appendChild(crearElemento("p", "no-levels-msg", "Esta unidad no posee estadísticas de mejora por nivel."));
             return;
         }
-
         const tabla = crearElemento("table", "levels-table");
-        const thead = crearElemento("thead");
-        const trHead = crearElemento("tr");
-        trHead.appendChild(crearElemento("th", "", "NIVEL"));
-        trHead.appendChild(crearElemento("th", "", "VIDA"));
-        trHead.appendChild(crearElemento("th", "", "ATAQUE"));
-        thead.appendChild(trHead);
-        tabla.appendChild(thead);
-
+        tabla.innerHTML = "<thead><tr><th>NIVEL</th><th>VIDA</th><th>ATAQUE</th></tr></thead>";
         const tbody = crearElemento("tbody");
         ESCALADO_NIVELES.forEach(item => {
-            const vidaNivel = Math.round(vidaBase * item.multVida);
-            const ataqueNivel = ataqueBase + item.sumaAtaque;
             const tr = crearElemento("tr", item.nivel === 10 ? "max-level-row" : "");
-
-            const tdNvl = crearElemento("td");
-            tdNvl.appendChild(crearElemento("strong", "", "NVL " + item.nivel));
-            tr.appendChild(tdNvl);
-            tr.appendChild(crearElemento("td", "", vidaNivel.toLocaleString()));
-            tr.appendChild(crearElemento("td", "", ataqueNivel.toLocaleString()));
+            tr.innerHTML = "<td><strong>NVL " + item.nivel + "</strong></td><td>" +
+                Math.round(vidaBase * item.multVida).toLocaleString() + "</td><td>" +
+                (ataqueBase + item.sumaAtaque).toLocaleString() + "</td>";
             tbody.appendChild(tr);
         });
-
         tabla.appendChild(tbody);
         contenedor.appendChild(tabla);
     }
@@ -15286,19 +15296,15 @@ document.addEventListener("DOMContentLoaded", () => {
     function obtenerEtiquetas(u) {
         const cat = (u.categoria || "INFANTERIA").toUpperCase();
         const fac = (u.faccion || "").toUpperCase();
-        let claseCss = "type-infantry";
-
-        if (cat === "MECHA") claseCss = "type-mecha";
-        else if (cat === "VEHICULO") claseCss = "type-vehicle";
-        else if (cat === "AEREO" || cat === "DRON") claseCss = "type-air";
-        else if (cat === "MARINA") claseCss = "type-marine";
-        else if (cat === "EDIFICIO") claseCss = "type-building";
-        else if (cat === "ANIMALES") claseCss = "type-animal";
-        else if (cat === "CUPON" || cat === "ITEM") claseCss = "type-item";
-        else if (cat === "RECURSOS" || cat === "TERRENO") claseCss = "type-resource";
-
-        const textoEtiqueta = fac && fac !== "GENERAL" ? fac + " • " + cat : cat;
-        return { texto: textoEtiqueta, clase: claseCss };
+        const mapaCss = {
+            MECHA: "type-mecha", VEHICULO: "type-vehicle", AEREO: "type-air", DRON: "type-air",
+            MARINA: "type-marine", EDIFICIO: "type-building", ANIMALES: "type-animal",
+            CUPON: "type-item", ITEM: "type-item", RECURSOS: "type-resource", TERRENO: "type-resource"
+        };
+        return {
+            texto: fac && fac !== "GENERAL" ? fac + " • " + cat : cat,
+            clase: mapaCss[cat] || "type-infantry"
+        };
     }
 
     function actualizarVista() {
@@ -15314,26 +15320,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 : "0 REGISTROS ENCONTRADOS";
         }
 
-        paginaItems.forEach(u => {
-            const cat = obtenerEtiquetas(u);
-            const stats = u.estadisticas || {};
-            const val = (v) => (v !== null && v !== undefined) ? v.toLocaleString() : "---";
-            const uid = String(u.id);
-
-            const regActual = miColeccion[uid] || { almacen: 0, trabajando: 0, mapa: 0 };
-            const cantAlmacen = regActual.almacen || 0;
-            const cantTrabajando = regActual.trabajando || 0;
-            const cantMapa = regActual.mapa || 0;
-            const tieneUnidad = (cantAlmacen + cantTrabajando + cantMapa) > 0;
-
-            const card = crearElemento("article", "unit-card" + (tieneUnidad ? " owned-card" : ""));
-
-            // Cabecera
-            const header = crearElemento("div", "card-header");
-            header.appendChild(crearElemento("span", "unit-id", "#" + u.id));
+paginaItems.forEach(u => {
+const cat = obtenerEtiquetas(u);
+const stats = u.estadisticas || {};
+const val = (v) => (v != null) ? v.toLocaleString() : "---";
+const uid = String(u.id);
+const regActual = miColeccion[uid] || { almacen: 0, trabajando: 0, mapa: 0 };
+const tieneUnidad = (regActual.almacen + regActual.trabajando + regActual.mapa) > 0;
+const card = crearElemento("article", "unit-card" + (tieneUnidad ? " owned-card" : ""));
+const header = crearElemento("div", "card-header");
+header.appendChild(crearElemento("span", "unit-id", "#" + u.id));
 header.appendChild(crearElemento("span", "unit-type " + cat.clase, cat.texto));
 card.appendChild(header);
-// Marco de imagen
 const imgFrame = crearElemento("div", "image-frame");
 if (u.imagen_ruta) {
 const img = document.createElement("img");
@@ -15349,69 +15347,55 @@ imgFrame.appendChild(img);
 imgFrame.appendChild(crearElemento("div", "no-image-placeholder", "SIN REGISTRO VISUAL"));
 }
 card.appendChild(imgFrame);
-// Cuerpo y estadísticas
 const body = crearElemento("div", "card-body");
 body.appendChild(crearElemento("h3", "", u.nombre));
 const statsGrid = crearElemento("div", "stats-grid");
-const listaStats = [
-["VIDA", val(stats.vida)],
-["ATAQUE", val(stats.ataque)],
-["RANGO", val(stats.rango)],
-["ELABORACIÓN", val(stats.elaboracion)],
-["VELOCIDAD", val(stats.velocidad)],
-["POBLACIÓN", val(stats.poblacion)]
-];
-listaStats.forEach(par => {
-const statBox = crearElemento("div", "stat");
-statBox.appendChild(crearElemento("span", "", par.at(0)));
-statBox.appendChild(crearElemento("strong", "", par.at(1)));
-statsGrid.appendChild(statBox);
+[["VIDA", val(stats.vida)], ["ATAQUE", val(stats.ataque)], ["RANGO", val(stats.rango)],
+["ELABORACIÓN", val(stats.elaboracion)], ["VELOCIDAD", val(stats.velocidad)], ["POBLACIÓN", val(stats.poblacion)]
+].forEach(par => {
+const box = crearElemento("div", "stat");
+box.appendChild(crearElemento("span", "", par.at(0)));
+box.appendChild(crearElemento("strong", "", par.at(1)));
+statsGrid.appendChild(box);
 });
 const powerBox = crearElemento("div", "stat stat-power");
 powerBox.appendChild(crearElemento("span", "", "FUERZA DE COMBATE"));
 powerBox.appendChild(crearElemento("strong", "", val(stats.fuerza_combate)));
 statsGrid.appendChild(powerBox);
 body.appendChild(statsGrid);
-// Controles triples: ALMACÉN, TRABAJANDO y MAPA
 const dualControl = crearElemento("div", "collection-dual-control");
-function crearCajaUbicacion(titulo, tipo, cantidadInicial) {
-const box = crearElemento("div", "location-box" + (cantidadInicial > 0 ? " has-units" : ""));
+function crearCajaUbicacion(titulo, tipo, cantInicial) {
+const box = crearElemento("div", "location-box" + (cantInicial > 0 ? " has-units" : ""));
 box.appendChild(crearElemento("span", "location-title", titulo));
 const qtyBox = crearElemento("div", "qty-box");
 const btnMinus = crearElemento("button", "qty-btn", "-");
 btnMinus.type = "button";
-const valSpan = crearElemento("span", "qty-value", String(cantidadInicial));
+const valSpan = crearElemento("span", "qty-value", String(cantInicial));
 const btnPlus = crearElemento("button", "qty-btn", "+");
 btnPlus.type = "button";
-qtyBox.appendChild(btnMinus);
-qtyBox.appendChild(valSpan);
-qtyBox.appendChild(btnPlus);
+qtyBox.append(btnMinus, valSpan, btnPlus);
 box.appendChild(qtyBox);
 btnPlus.addEventListener("click", () => modificarCantidad(tipo, 1));
 btnMinus.addEventListener("click", () => modificarCantidad(tipo, -1));
 return { box, valSpan };
 }
-const controlAlmacen = crearCajaUbicacion("ALMACÉN", "almacen", cantAlmacen);
-const controlTrabajando = crearCajaUbicacion("TRABAJANDO", "trabajando", cantTrabajando);
-const controlMapa = crearCajaUbicacion("MAPA", "mapa", cantMapa);
-dualControl.appendChild(controlAlmacen.box);
-dualControl.appendChild(controlTrabajando.box);
-dualControl.appendChild(controlMapa.box);
+const cAlm = crearCajaUbicacion("ALMACÉN", "almacen", regActual.almacen || 0);
+const cTrab = crearCajaUbicacion("TRABAJANDO", "trabajando", regActual.trabajando || 0);
+const cMap = crearCajaUbicacion("MAPA", "mapa", regActual.mapa || 0);
+dualControl.append(cAlm.box, cTrab.box, cMap.box);
 body.appendChild(dualControl);
 card.appendChild(body);
 function modificarCantidad(tipo, delta) {
 if (!miColeccion[uid]) miColeccion[uid] = { almacen: 0, trabajando: 0, mapa: 0 };
 miColeccion[uid][tipo] = Math.max(0, (miColeccion[uid][tipo] || 0) + delta);
-const a = miColeccion[uid].almacen;
-const t = miColeccion[uid].trabajando;
-const m = miColeccion[uid].mapa;
-controlAlmacen.valSpan.textContent = String(a);
-controlTrabajando.valSpan.textContent = String(t);
-controlMapa.valSpan.textContent = String(m);
-controlAlmacen.box.classList.toggle("has-units", a > 0);
-controlTrabajando.box.classList.toggle("has-units", t > 0);
-controlMapa.box.classList.toggle("has-units", m > 0);
-if (a === 0 && t === 0 && m === 0) {
+const { almacen: a, trabajando: t, mapa: m } = miColeccion[uid];
+cAlm.valSpan.textContent = String(a);
+cTrab.valSpan.textContent = String(t);
+cMap.valSpan.textContent = String(m);
+cAlm.box.classList.toggle("has-units", a > 0);
+cTrab.box.classList.toggle("has-units", t > 0);
+cMap.box.classList.toggle("has-units", m > 0);
+if (a + t + m === 0) {
 delete miColeccion[uid];
 card.classList.remove("owned-card");
 } else {
@@ -15419,22 +15403,18 @@ card.classList.add("owned-card");
 }
 guardarColeccion();
 const btnActivo = document.querySelector(".filter-btn.active");
-if (btnActivo && btnActivo.dataset.categoria === "COLECCION" && !miColeccion[uid]) {
-filtrar();
+if (btnActivo && btnActivo.dataset.categoria === "COLECCION" && !miColeccion[uid]) filtrar();
 }
-}
-// Botón y cajón de niveles (1 - 10)
 const btnNiveles = crearElemento("button", "card-footer-btn toggle-levels-btn", "VER NIVELES (1 - 10) ▼");
 btnNiveles.type = "button";
 const drawer = crearElemento("div", "levels-drawer");
 construirTablaNiveles(drawer, stats.vida, stats.ataque);
 btnNiveles.addEventListener("click", () => {
-const estaAbierto = drawer.classList.toggle("open");
-btnNiveles.textContent = estaAbierto ? "OCULTAR NIVELES ▲" : "VER NIVELES (1 - 10) ▼";
-btnNiveles.classList.toggle("active-drawer-btn", estaAbierto);
+const abierto = drawer.classList.toggle("open");
+btnNiveles.textContent = abierto ? "OCULTAR NIVELES ▲" : "VER NIVELES (1 - 10) ▼";
+btnNiveles.classList.toggle("active-drawer-btn", abierto);
 });
-card.appendChild(btnNiveles);
-card.appendChild(drawer);
+card.append(btnNiveles, drawer);
 cardsGrid.appendChild(card);
 });
 renderizarPaginacion(total);
@@ -15444,12 +15424,12 @@ if (!paginationContainer) return;
 paginationContainer.innerHTML = "";
 const totalPaginas = Math.ceil(total / porPagina);
 if (totalPaginas <= 1) return;
-const crearBtn = (texto, pagina, deshabilitado = false, activo = false) => {
-const btn = crearElemento("button", "page-btn" + (activo ? " active" : ""), texto);
+const crearBtn = (texto, pag, disabled = false, active = false) => {
+const btn = crearElemento("button", "page-btn" + (active ? " active" : ""), texto);
 btn.type = "button";
-btn.disabled = deshabilitado;
+btn.disabled = disabled;
 btn.onclick = () => {
-paginaActual = pagina;
+paginaActual = pag;
 actualizarVista();
 window.scrollTo({ top: 0, behavior: "smooth" });
 };
@@ -15477,29 +15457,22 @@ if (!coincideTexto) return false;
 if (categoriaFiltro === "TODOS") return true;
 if (categoriaFiltro === "COLECCION") {
 const reg = miColeccion[String(u.id)];
-return reg && ((reg.almacen || 0) + (reg.trabajando || 0) + (reg.mapa || 0)) > 0;
+return reg && (reg.almacen + reg.trabajando + reg.mapa) > 0;
 }
-const catUnidad = (u.categoria || "").toUpperCase();
-return catUnidad === categoriaFiltro;
+return (u.categoria || "").toUpperCase() === categoriaFiltro;
 });
-// Ordenamiento avanzado
 const sortSelect = document.getElementById("sort-select");
-const criterioOrden = sortSelect ? sortSelect.value : "id_asc";
+const orden = sortSelect ? sortSelect.value : "id_asc";
 unidadesFiltradas.sort((a, b) => {
-const sa = a.estadisticas || {};
-const sb = b.estadisticas || {};
-if (criterioOrden === "fc_desc") return (sb.fuerza_combate || 0) - (sa.fuerza_combate || 0);
-if (criterioOrden === "vida_desc") return (sb.vida || 0) - (sa.vida || 0);
-if (criterioOrden === "ataque_desc") return (sb.ataque || 0) - (sa.ataque || 0);
-if (criterioOrden === "rango_desc") return (sb.rango || 0) - (sa.rango || 0);
-if (criterioOrden === "pob_asc") {
-const pa = (sa.poblacion && sa.poblacion > 0) ? sa.poblacion : 9999;
-const pb = (sb.poblacion && sb.poblacion > 0) ? sb.poblacion : 9999;
-return pa - pb;
-}
-if (criterioOrden === "eficiencia_desc") {
-const efa = (sa.poblacion && sa.poblacion > 0) ? ((sa.fuerza_combate || 0) / sa.poblacion) : 0;
-const efb = (sb.poblacion && sb.poblacion > 0) ? ((sb.fuerza_combate || 0) / sb.poblacion) : 0;
+const sa = a.estadisticas || {}, sb = b.estadisticas || {};
+if (orden === "fc_desc") return (sb.fuerza_combate || 0) - (sa.fuerza_combate || 0);
+if (orden === "vida_desc") return (sb.vida || 0) - (sa.vida || 0);
+if (orden === "ataque_desc") return (sb.ataque || 0) - (sa.ataque || 0);
+if (orden === "rango_desc") return (sb.rango || 0) - (sa.rango || 0);
+if (orden === "pob_asc") return ((sa.poblacion > 0) ? sa.poblacion : 9999) - ((sb.poblacion > 0) ? sb.poblacion : 9999);
+if (orden === "eficiencia_desc") {
+const efa = (sa.poblacion > 0) ? ((sa.fuerza_combate || 0) / sa.poblacion) : 0;
+const efb = (sb.poblacion > 0) ? ((sb.fuerza_combate || 0) / sb.poblacion) : 0;
 return efb - efa;
 }
 return (parseInt(a.id) || 0) - (parseInt(b.id) || 0);
@@ -15514,25 +15487,16 @@ if (!factionsGrid) return;
 const mapaFacciones = {};
 todasLasUnidades.forEach(u => {
 const fac = (u.faccion || "OTROS").toUpperCase().trim();
-if (!mapaFacciones[fac]) {
-mapaFacciones[fac] = {
-nombre: fac,
-total: 0,
-imagenInsignia: null,
-mayorFuerza: -1
-};
-}
+if (!mapaFacciones[fac]) mapaFacciones[fac] = { nombre: fac, total: 0, imagenInsignia: null, mayorFuerza: -1 };
 mapaFacciones[fac].total++;
-const fuerza = (u.estadisticas && u.estadisticas.fuerza_combate) ? u.estadisticas.fuerza_combate : 0;
+const fuerza = (u.estadisticas && u.estadisticas.fuerza_combate) || 0;
 if (u.imagen_ruta && fuerza >= mapaFacciones[fac].mayorFuerza) {
 mapaFacciones[fac].mayorFuerza = fuerza;
 mapaFacciones[fac].imagenInsignia = u.imagen_ruta;
 }
 });
 const listaFacciones = Object.values(mapaFacciones).sort((a, b) => b.total - a.total);
-if (factionsBadge) {
-factionsBadge.textContent = listaFacciones.length + " FACCIONES REGISTRADAS";
-}
+if (factionsBadge) factionsBadge.textContent = listaFacciones.length + " FACCIONES REGISTRADAS";
 factionsGrid.innerHTML = "";
 listaFacciones.forEach(fac => {
 const card = crearElemento("div", "faction-card");
@@ -15574,28 +15538,18 @@ btn.classList.add("active");
 filtrar();
 });
 });
-// =========================================
-// CONTROL DE POBLACIÓN MÁXIMA (-5 / +5 hasta 450)
-// =========================================
-const botonMenosPob = document.getElementById("btn-pop-minus") || document.querySelector(".pop-btns button:first-child");
-const botonMasPob = document.getElementById("btn-pop-plus") || document.querySelector(".pop-btns button:last-child");
-if (botonMasPob) {
-botonMasPob.addEventListener("click", () => {
+// Control de Población Máxima
+document.getElementById("btn-pop-plus")?.addEventListener("click", () => {
 poblacionMaxima = Math.min(450, poblacionMaxima + 5);
 localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
 actualizarBarraColeccion();
 });
-}
-if (botonMenosPob) {
-botonMenosPob.addEventListener("click", () => {
+document.getElementById("btn-pop-minus")?.addEventListener("click", () => {
 poblacionMaxima = Math.max(0, poblacionMaxima - 5);
 localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
 actualizarBarraColeccion();
 });
-}
-// =========================================
-// EXPORTAR, IMPORTAR Y LIMPIAR INVENTARIO (WIKI + ARCHIVO DEL JUEGO)
-// =========================================
+// Exportar / Importar / Limpiar Inventario
 const btnExportInv = document.getElementById("btn-export-inv");
 const btnImportInv = document.getElementById("btn-import-inv");
 const btnResetInv = document.getElementById("btn-reset-inv");
@@ -15606,27 +15560,19 @@ if (Object.keys(miColeccion).length === 0 && poblacionMaxima === 0) {
 alert("Tu inventario y población están en 0. Agrega datos antes de exportar.");
 return;
 }
-const respaldoCompleto = {
-poblacionMaxima: poblacionMaxima,
-unidades: miColeccion
-};
-const dataStr = JSON.stringify(respaldoCompleto, null, 2);
-const blob = new Blob([dataStr], { type: "application/json" });
+const blob = new Blob([JSON.stringify({ poblacionMaxima, unidades: miColeccion }, null, 2)], { type: "application/json" });
 const url = URL.createObjectURL(blob);
 const enlace = document.createElement("a");
 enlace.href = url;
-const fecha = new Date().toISOString().slice(0, 10);
-enlace.download = "inventario_socialwars_" + fecha + ".json";
+enlace.download = "inventario_socialwars_" + new Date().toISOString().slice(0, 10) + ".json";
 document.body.appendChild(enlace);
 enlace.click();
-document.body.removeChild(enlace);
+enlace.remove();
 URL.revokeObjectURL(url);
 });
 }
 if (btnImportInv && inputImportFile) {
-btnImportInv.addEventListener("click", () => {
-inputImportFile.click();
-});
+btnImportInv.addEventListener("click", () => inputImportFile.click());
 inputImportFile.addEventListener("change", (e) => {
 const archivo = e.target.files.item(0);
 if (!archivo) return;
@@ -15636,145 +15582,84 @@ try {
 let textoCrudo = String(evento.target.result || "").trim();
 const inicioJson = textoCrudo.indexOf("{");
 const finJson = textoCrudo.lastIndexOf("}");
-if (inicioJson !== -1 && finJson !== -1 && finJson > inicioJson) {
-textoCrudo = textoCrudo.slice(inicioJson, finJson + 1);
-}
+if (inicioJson !== -1 && finJson > inicioJson) textoCrudo = textoCrudo.slice(inicioJson, finJson + 1);
 const datosImportados = JSON.parse(textoCrudo);
-if (typeof datosImportados !== "object" || datosImportados === null || Array.isArray(datosImportados)) {
-throw new Error("Formato inválido");
-}
+if (typeof datosImportados !== "object" || !datosImportados || Array.isArray(datosImportados)) throw new Error();
 const nuevaColeccion = {};
-// CASO 1: Archivo directo del juego (cualquier cuenta / múltiples islas)
 const mapaPrincipal = datosImportados.map || (datosImportados.playerInfo && datosImportados.playerInfo.map);
 const listaMapas = datosImportados.maps || (datosImportados.playerInfo && datosImportados.playerInfo.maps);
+// CASO 1: Archivo directo del juego
 if ((mapaPrincipal && typeof mapaPrincipal === "object") || Array.isArray(listaMapas)) {
 const categoriasNoTropa = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
-const idsNoEncontrados = new Set();
-function buscarClaveProfunda(obj, claveBuscada) {
+function buscarClaveProfunda(obj, clave) {
 if (!obj || typeof obj !== "object") return null;
-if (obj[claveBuscada] && typeof obj[claveBuscada] === "object" && !Array.isArray(obj[claveBuscada])) {
-return obj[claveBuscada];
-}
+if (obj[clave] && typeof obj[clave] === "object" && !Array.isArray(obj[clave])) return obj[clave];
 for (const k of Object.keys(obj)) {
-const res = buscarClaveProfunda(obj[k], claveBuscada);
+const res = buscarClaveProfunda(obj[k], clave);
 if (res) return res;
 }
 return null;
 }
-function sumarAlmacen(objetoOrigen) {
-if (!objetoOrigen || typeof objetoOrigen !== "object") return;
-Object.keys(objetoOrigen).forEach(idKey => {
-const cantidad = parseInt(objetoOrigen[idKey]) || 0;
-const idStr = String(idKey);
-const infoUnidad = mapaUnidades[idStr];
-if (cantidad > 0) {
-if (infoUnidad) {
-const cat = (infoUnidad.categoria || "").toUpperCase();
-if (!categoriasNoTropa.includes(cat)) {
-if (!nuevaColeccion[idStr]) {
-nuevaColeccion[idStr] = { almacen: 0, trabajando: 0, mapa: 0 };
-}
-nuevaColeccion[idStr].almacen += cantidad;
-}
-} else {
-idsNoEncontrados.add(idStr);
-}
+function sumarAlmacen(objOrigen) {
+if (!objOrigen || typeof objOrigen !== "object") return;
+Object.keys(objOrigen).forEach(idKey => {
+const cant = parseInt(objOrigen[idKey]) || 0;
+const info = mapaUnidades[String(idKey)];
+if (cant > 0 && info && !categoriasNoTropa.includes((info.categoria || "").toUpperCase())) {
+if (!nuevaColeccion[idKey]) nuevaColeccion[idKey] = { almacen: 0, trabajando: 0, mapa: 0 };
+nuevaColeccion[idKey].almacen += cant;
 }
 });
 }
 function procesarIsla(islaObj) {
 if (!islaObj || typeof islaObj !== "object") return;
-const itemsMapa = islaObj.items || {};
-const unitsMapa = islaObj.units || {};
-// Revisar tanto "items" como "units" en la isla
-[itemsMapa, unitsMapa].forEach(contenedor => {
+[islaObj.items || {}, islaObj.units || {}].forEach(contenedor => {
 Object.values(contenedor).forEach(arrItem => {
-if (Array.isArray(arrItem) && arrItem.length > 0) {
+if (!Array.isArray(arrItem) || arrItem.length === 0) return;
 const idMapa = String(arrItem.at(0));
-const infoUnidad = mapaUnidades[idMapa];
-if (infoUnidad) {
-const cat = (infoUnidad.categoria || "").toUpperCase();
-if (!categoriasNoTropa.includes(cat)) {
+const info = mapaUnidades[idMapa];
+if (info && !categoriasNoTropa.includes((info.categoria || "").toUpperCase())) {
 if (!nuevaColeccion[idMapa]) nuevaColeccion[idMapa] = { almacen: 0, trabajando: 0, mapa: 0 };
 nuevaColeccion[idMapa].mapa += 1;
 }
-}
-// Unidades dentro de edificios (Búnker, Fusión, Granjas)
-const nombreEdificio = infoUnidad ? infoUnidad.nombre.toLowerCase() : "";
-const esHospital = nombreEdificio.includes("hospital");
+const esHospital = info ? info.nombre.toLowerCase().includes("hospital") : false;
 const trabajadores = arrItem.at(5);
 if (!esHospital && Array.isArray(trabajadores)) {
 trabajadores.forEach(trab => {
-if (Array.isArray(trab) && trab.length > 0) {
+if (Array.isArray(trab) && trab.length > 0 && mapaUnidades[String(trab.at(0))]) {
 const idTrab = String(trab.at(0));
-if (mapaUnidades[idTrab]) {
 if (!nuevaColeccion[idTrab]) nuevaColeccion[idTrab] = { almacen: 0, trabajando: 0, mapa: 0 };
 nuevaColeccion[idTrab].trabajando += 1;
-} else {
-idsNoEncontrados.add(idTrab);
-}
 }
 });
-}
 }
 });
 });
 }
-// 1. Procesar isla principal y todas las islas secundarias si existen
-if (mapaPrincipal) procesarIsla(mapaPrincipal);
-if (Array.isArray(listaMapas)) {
-listaMapas.forEach(isla => procesarIsla(isla));
-} else if (listaMapas && typeof listaMapas === "object") {
-Object.values(listaMapas).forEach(isla => procesarIsla(isla));
-}
-// 2. Sumar Almacén Ilimitado ("store") + Limitado ("gifts")
-const storeAlmacen = buscarClaveProfunda(datosImportados, "store") || {};
-const giftsAlmacen = buscarClaveProfunda(datosImportados, "gifts") || {};
-sumarAlmacen(storeAlmacen);
-sumarAlmacen(giftsAlmacen);
-// 3. Población máxima real (Base 50 + Edificios de población en mapa + increasedPopulation)
-const bonosEdificiosPob = {
-"1": 3,     // House I
-"47": 4,    // House II
-"48": 5,    // House III
-"175": 75,  // Babilonian Temple
-"253": 75   // Parliament
-};
+const islas = [mapaPrincipal, ...(Array.isArray(listaMapas) ? listaMapas : Object.values(listaMapas || {}))].filter(Boolean);
+islas.forEach(procesarIsla);
+sumarAlmacen(buscarClaveProfunda(datosImportados, "store"));
+sumarAlmacen(buscarClaveProfunda(datosImportados, "gifts"));
+const bonosEdificiosPob = { "1": 3, "47": 4, "48": 5, "175": 75, "253": 75 };
 let incPopServidor = 0;
-function buscarIncPop(obj) {
-if (!obj || typeof obj !== "object") return null;
-if (obj.increasedPopulation !== undefined && obj.increasedPopulation !== null) {
-const num = parseInt(obj.increasedPopulation);
-if (!isNaN(num)) return num;
+(function buscarInc(obj) {
+if (!obj || typeof obj !== "object") return;
+if (obj.increasedPopulation != null && !isNaN(parseInt(obj.increasedPopulation))) {
+incPopServidor = parseInt(obj.increasedPopulation);
+return;
 }
-for (const k of Object.keys(obj)) {
-const res = buscarIncPop(obj[k]);
-if (res !== null) return res;
-}
-return null;
-}
-const incDetectado = buscarIncPop(datosImportados);
-if (incDetectado !== null) incPopServidor = incDetectado;
+Object.keys(obj).forEach(k => buscarInc(obj[k]));
+})(datosImportados);
 let popPorEdificios = 0;
-function sumarEdificiosIsla(islaObj) {
-if (!islaObj || typeof islaObj !== "object" || !islaObj.items) return;
-Object.values(islaObj.items).forEach(arrItem => {
-if (Array.isArray(arrItem) && arrItem.length > 0) {
-const idEdif = String(arrItem.at(0));
-if (bonosEdificiosPob[idEdif]) {
-popPorEdificios += bonosEdificiosPob[idEdif];
-}
+islas.forEach(isla => {
+if (!isla.items) return;
+Object.values(isla.items).forEach(arrItem => {
+if (Array.isArray(arrItem) && bonosEdificiosPob[String(arrItem.at(0))]) {
+popPorEdificios += bonosEdificiosPob[String(arrItem.at(0))];
 }
 });
-}
-if (mapaPrincipal) sumarEdificiosIsla(mapaPrincipal);
-if (Array.isArray(listaMapas)) {
-listaMapas.forEach(isla => sumarEdificiosIsla(isla));
-} else if (listaMapas && typeof listaMapas === "object") {
-Object.values(listaMapas).forEach(isla => sumarEdificiosIsla(isla));
-}
-const popCalculada = 50 + incPopServidor + popPorEdificios;
-poblacionMaxima = Math.min(450, Math.max(50, popCalculada));
+});
+poblacionMaxima = Math.min(450, Math.max(50, 50 + incPopServidor + popPorEdificios));
 localStorage.setItem("sw_codex_pop_max", String(poblacionMaxima));
 miColeccion = nuevaColeccion;
 guardarColeccion();
@@ -15783,7 +15668,7 @@ alert("¡Partida sincronizada! Se detectaron " + Object.keys(miColeccion).length
 inputImportFile.value = "";
 return;
 }
-// CASO 2: Archivo exportado desde Social Wars Codex
+// CASO 2: Respaldo JSON de Social Wars Codex
 let origenUnidades = datosImportados;
 if (datosImportados.unidades && typeof datosImportados.unidades === "object") {
 origenUnidades = datosImportados.unidades;
@@ -15798,15 +15683,13 @@ if (reg && typeof reg === "object") {
 const a = Math.max(0, parseInt(reg.almacen) || 0);
 const t = Math.max(0, parseInt(reg.trabajando) || 0);
 const m = Math.max(0, parseInt(reg.mapa) || 0);
-if ((a + t + m) > 0) {
-nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
-}
+if (a + t + m > 0) nuevaColeccion[String(id)] = { almacen: a, trabajando: t, mapa: m };
 }
 });
 miColeccion = nuevaColeccion;
 guardarColeccion();
 actualizarVista();
-alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas y población máxima de " + poblacionMaxima + ".");
+alert("¡Progreso importado! Se cargaron " + Object.keys(miColeccion).length + " unidades únicas.");
 } catch (err) {
 alert("Error: El archivo seleccionado no es un respaldo válido ni un JSON de partida.");
 }
@@ -15827,278 +15710,143 @@ filtrar();
 }
 });
 }
-// =========================================
-// SIMULADOR DE COMBATE 1 VS 1
-// =========================================
-const simSelect1 = document.getElementById("sim-select-1");
-const simSelect2 = document.getElementById("sim-select-2");
-const simLevel1 = document.getElementById("sim-level-1");
-const simLevel2 = document.getElementById("sim-level-2");
-const btnRunSim = document.getElementById("btn-run-sim");
-const simResultBox = document.getElementById("sim-result-box");
-const unidadesCombatientes = todasLasUnidades.filter(u =>
-u.estadisticas &&
-u.estadisticas.vida !== null &&
-u.estadisticas.vida > 0 &&
-u.estadisticas.ataque !== null &&
-u.estadisticas.ataque > 0
-);
-function obtenerStatsPorNivel(unidad, nivel) {
-const esc = ESCALADO_NIVELES.find(e => e.nivel === nivel) || ESCALADO_NIVELES.at(0);
-const st = unidad.estadisticas;
-return {
-vida: Math.round(st.vida * esc.multVida),
-ataque: st.ataque + esc.sumaAtaque,
-rango: st.rango || 1,
-velocidad: st.velocidad || 1,
-fuerza: st.fuerza_combate || 0
-};
-}
+// Simulador 1 vs 1
 function actualizarVistaCombatiente(slot) {
-const hiddenIdEl = document.getElementById("sim-select-" + slot);
+const u = mapaUnidades[document.getElementById("sim-select-" + slot)?.value];
 const levelEl = document.getElementById("sim-level-" + slot);
-const imgBox = document.getElementById("sim-img-" + slot);
-const nameEl = document.getElementById("sim-name-" + slot);
-const statsBox = document.getElementById("sim-stats-" + slot);
-if (!hiddenIdEl || !levelEl) return;
-const u = mapaUnidades[hiddenIdEl.value];
-if (!u) return;
+if (!u || !levelEl) return;
 const nvl = parseInt(levelEl.value) || 1;
 const st = obtenerStatsPorNivel(u, nvl);
+const nameEl = document.getElementById("sim-name-" + slot);
+const imgBox = document.getElementById("sim-img-" + slot);
+const statsBox = document.getElementById("sim-stats-" + slot);
 if (nameEl) nameEl.textContent = u.nombre + " (NVL " + nvl + ")";
 if (imgBox) {
-imgBox.innerHTML = "";
-if (u.imagen_ruta) {
-const img = document.createElement("img");
-img.src = u.imagen_ruta;
-img.alt = u.nombre;
-imgBox.appendChild(img);
-} else {
-imgBox.appendChild(crearElemento("div", "no-image-placeholder", "SIN IMAGEN"));
-}
+imgBox.innerHTML = u.imagen_ruta
+? ''
+: 'SIN IMAGEN';
 }
 if (statsBox) {
 statsBox.innerHTML = "";
-const filas = [
-["VIDA", st.vida.toLocaleString()],
-["ATAQUE", st.ataque.toLocaleString()],
-["RANGO", String(st.rango)],
-["VELOCIDAD", String(st.velocidad)],
-["FC BASE", st.fuerza.toLocaleString()]
-];
-filas.forEach(par => {
+[["VIDA", st.vida.toLocaleString()], ["ATAQUE", st.ataque.toLocaleString()],
+["RANGO", st.rango], ["VELOCIDAD", st.velocidad], ["FC BASE", st.fuerza.toLocaleString()]
+].forEach(par => {
 const item = crearElemento("div", "sim-stat-item");
-item.appendChild(crearElemento("span", "", par.at(0)));
-item.appendChild(crearElemento("strong", "", par.at(1)));
+item.innerHTML = "" + par.at(0) + "" + par.at(1) + "";
 statsBox.appendChild(item);
 });
 }
 }
-function configurarBuscadorSimulador(slot, unidadInicial) {
-const inputEl = document.getElementById("sim-search-" + slot);
-const hiddenIdEl = document.getElementById("sim-select-" + slot);
-const dropdownEl = document.getElementById("sim-dropdown-" + slot);
-if (!inputEl || !hiddenIdEl || !dropdownEl) return;
-function seleccionarUnidad(u) {
-hiddenIdEl.value = String(u.id);
-inputEl.value = "#" + u.id + " - " + u.nombre;
-dropdownEl.classList.remove("open");
-actualizarVistaCombatiente(slot);
-}
-function mostrarOpciones(filtroTexto) {
-dropdownEl.innerHTML = "";
-const termino = filtroTexto.toLowerCase().trim();
-const coincidencias = unidadesCombatientes.filter(u =>
-u.nombre.toLowerCase().includes(termino) ||
-String(u.id).includes(termino) ||
-(u.faccion && u.faccion.toLowerCase().includes(termino))
-).slice(0, 30);
-if (coincidencias.length === 0) {
-dropdownEl.appendChild(crearElemento("div", "sim-no-results", "Sin coincidencias"));
-} else {
-coincidencias.forEach(u => {
-const item = crearElemento("div", "sim-option-item");
-if (u.imagen_ruta) {
-const miniImg = document.createElement("img");
-miniImg.src = u.imagen_ruta;
-miniImg.alt = u.nombre;
-item.appendChild(miniImg);
-}
-item.appendChild(crearElemento("span", "", "#" + u.id + " - " + u.nombre));
-item.addEventListener("mousedown", (e) => {
-e.preventDefault();
-seleccionarUnidad(u);
+if (unidadesCombatientes.length >= 2) {
+[1, 2].forEach((slot, idx) => {
+crearBuscadorUnidades({
+inputEl: document.getElementById("sim-search-" + slot),
+hiddenEl: document.getElementById("sim-select-" + slot),
+dropdownEl: document.getElementById("sim-dropdown-" + slot),
+listaOrigen: unidadesCombatientes,
+onSelect: () => actualizarVistaCombatiente(slot),
+unidadInicial: unidadesCombatientes.at(idx === 0 ? 0 : Math.min(10, unidadesCombatientes.length - 1))
 });
-dropdownEl.appendChild(item);
+document.getElementById("sim-level-" + slot)?.addEventListener("change", () => actualizarVistaCombatiente(slot));
 });
-}
-dropdownEl.classList.add("open");
-}
-inputEl.addEventListener("focus", () => {
-inputEl.select();
-mostrarOpciones("");
-});
-inputEl.addEventListener("input", () => {
-mostrarOpciones(inputEl.value);
-});
-inputEl.addEventListener("blur", () => {
-setTimeout(() => dropdownEl.classList.remove("open"), 150);
-});
-if (unidadInicial) {
-seleccionarUnidad(unidadInicial);
-}
-}
-function inicializarSimulador() {
-if (unidadesCombatientes.length < 2) return;
-const uInicial1 = unidadesCombatientes.at(0);
-const uInicial2 = unidadesCombatientes.at(Math.min(10, unidadesCombatientes.length - 1));
-configurarBuscadorSimulador(1, uInicial1);
-configurarBuscadorSimulador(2, uInicial2);
-if (simLevel1) simLevel1.addEventListener("change", () => actualizarVistaCombatiente(1));
-if (simLevel2) simLevel2.addEventListener("change", () => actualizarVistaCombatiente(2));
-if (btnRunSim) {
-btnRunSim.addEventListener("click", () => {
-const u1 = mapaUnidades[simSelect1.value];
-const u2 = mapaUnidades[simSelect2.value];
+document.getElementById("btn-run-sim")?.addEventListener("click", () => {
+const u1 = mapaUnidades[document.getElementById("sim-select-1").value];
+const u2 = mapaUnidades[document.getElementById("sim-select-2").value];
 if (!u1 || !u2) return;
-const nvl1 = parseInt(simLevel1.value) || 1;
-const nvl2 = parseInt(simLevel2.value) || 1;
-const s1 = obtenerStatsPorNivel(u1, nvl1);
-const s2 = obtenerStatsPorNivel(u2, nvl2);
-const golpesParaMatar2 = Math.ceil(s2.vida / s1.ataque);
-const golpesParaMatar1 = Math.ceil(s1.vida / s2.ataque);
-const ventajaRango1 = s1.rango > s2.rango ? 1 : 0;
-const ventajaRango2 = s2.rango > s1.rango ? 1 : 0;
-const turnos1 = golpesParaMatar2 - ventajaRango1;
-const turnos2 = golpesParaMatar1 - ventajaRango2;
-simResultBox.innerHTML = "";
-if (turnos1 < turnos2) {
-const golpesRecibidos = Math.max(0, golpesParaMatar2 - 1 - ventajaRango1);
-const vidaRestante = Math.max(1, s1.vida - (golpesRecibidos * s2.ataque));
-simResultBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 GANADOR: " + u1.nombre.toUpperCase()));
-simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Derrota al rival en " + golpesParaMatar2 + " golpes."));
-simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Vida restante estimada: " + vidaRestante.toLocaleString() + " HP."));
-} else if (turnos2 < turnos1) {
-const golpesRecibidos = Math.max(0, golpesParaMatar1 - 1 - ventajaRango2);
-const vidaRestante = Math.max(1, s2.vida - (golpesRecibidos * s1.ataque));
-simResultBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 GANADOR: " + u2.nombre.toUpperCase()));
-simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Derrota al rival en " + golpesParaMatar1 + " golpes."));
-simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Vida restante estimada: " + vidaRestante.toLocaleString() + " HP."));
+const s1 = obtenerStatsPorNivel(u1, parseInt(document.getElementById("sim-level-1").value) || 1);
+const s2 = obtenerStatsPorNivel(u2, parseInt(document.getElementById("sim-level-2").value) || 1);
+const golpes2 = Math.ceil(s2.vida / s1.ataque);
+const golpes1 = Math.ceil(s1.vida / s2.ataque);
+const r1 = s1.rango > s2.rango ? 1 : 0;
+const r2 = s2.rango > s1.rango ? 1 : 0;
+const t1 = golpes2 - r1, t2 = golpes1 - r2;
+const resBox = document.getElementById("sim-result-box");
+resBox.innerHTML = "";
+if (t1 < t2) {
+const hpRest = Math.max(1, s1.vida - (Math.max(0, golpes2 - 1 - r1) * s2.ataque));
+resBox.innerHTML = '🏆 GANADOR: ' + u1.nombre.toUpperCase() + '' +
+'Derrota al rival en ' + golpes2 + ' golpes.' +
+'Vida restante estimada: ' + hpRest.toLocaleString() + ' HP.';
+} else if (t2 < t1) {
+const hpRest = Math.max(1, s2.vida - (Math.max(0, golpes1 - 1 - r2) * s1.ataque));
+resBox.innerHTML = '🏆 GANADOR: ' + u2.nombre.toUpperCase() + '' +
+'Derrota al rival en ' + golpes1 + ' golpes.' +
+'Vida restante estimada: ' + hpRest.toLocaleString() + ' HP.';
 } else {
-simResultBox.appendChild(crearElemento("div", "sim-winner-title", "⚔ EMPATE TÉCNICO"));
-simResultBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos necesitan " + golpesParaMatar2 + " golpes para derrotarse."));
+resBox.innerHTML = '⚔ EMPATE TÉCNICO' +
+'Ambos necesitan ' + golpes2 + ' golpes para derrotarse.';
 }
 });
 }
-}
-inicializarSimulador();
-// =========================================
-// GENERADOR TÁCTICO DE EJÉRCITO ÓPTIMO
-// =========================================
-const btnGenerateSquad = document.getElementById("btn-generate-squad");
-const squadStrategyEl = document.getElementById("squad-strategy");
-const squadIncludeWorkingEl = document.getElementById("squad-include-working");
+// Generador Táctico de Ejército Óptimo
+document.getElementById("btn-generate-squad")?.addEventListener("click", () => {
 const squadGridEl = document.getElementById("squad-grid");
 const squadSummaryEl = document.getElementById("squad-summary");
 const squadPopBadgeEl = document.getElementById("squad-pop-badge");
-function generarRecomendacionEjercito() {
 if (!squadGridEl) return;
-if (squadPopBadgeEl) {
-squadPopBadgeEl.textContent = "POBLACIÓN OBJETIVO: " + poblacionMaxima;
-}
+if (squadPopBadgeEl) squadPopBadgeEl.textContent = "POBLACIÓN OBJETIVO: " + poblacionMaxima;
 if (poblacionMaxima <= 0) {
 squadSummaryEl.style.display = "none";
-squadGridEl.innerHTML = 'Primero configura tu Población Máxima (con los botones +5 en la barra superior o importando tu partida).';
+squadGridEl.innerHTML = 'Primero configura tu Población Máxima (con los botones +5 arriba o importando tu partida).';
 return;
 }
-const incluirTrabajando = squadIncludeWorkingEl ? squadIncludeWorkingEl.checked : false;
-const estrategia = squadStrategyEl ? squadStrategyEl.value : "max_fc";
-// Construir lista de copias individuales disponibles en el inventario del jugador
+const incluirTrabajando = document.getElementById("squad-include-working")?.checked || false;
+const estrategia = document.getElementById("squad-strategy")?.value || "max_fc";
 const copiasDisponibles = [];
 Object.keys(miColeccion).forEach(uid => {
-const reg = miColeccion[uid];
-const u = mapaUnidades[uid];
+const reg = miColeccion[uid], u = mapaUnidades[uid];
 if (!u || !u.estadisticas) return;
 const pob = parseInt(u.estadisticas.poblacion) || 0;
 const fc = parseInt(u.estadisticas.fuerza_combate) || 0;
 const rango = parseInt(u.estadisticas.rango) || 1;
 const cat = (u.categoria || "").toUpperCase();
-// Solo unidades desplegables con población > 0 y fuerza de combate > 0
 if (pob <= 0 || fc <= 0 || pob > poblacionMaxima) return;
 if (estrategia === "ranged" && rango < 4) return;
-let cantDisponible = (reg.almacen || 0) + (reg.mapa || 0);
-if (incluirTrabajando) cantDisponible += (reg.trabajando || 0);
-// Calcular puntaje estratégico según el modo elegido
-let valorTactico = fc;
+let cantDisp = (reg.almacen || 0) + (reg.mapa || 0) + (incluirTrabajando ? (reg.trabajando || 0) : 0);
+let score = fc;
 if (estrategia === "balanced") {
-const bonoRango = rango >= 4 ? 1.15 : 1.0;
-const bonoTipo = (cat === "MECHA" || cat === "AEREO" || cat === "VEHICULO") ? 1.12 : 1.0;
-valorTactico = Math.round(fc * bonoRango * bonoTipo);
+score = Math.round(fc * (rango >= 4 ? 1.15 : 1.0) * (["MECHA", "AEREO", "VEHICULO"].includes(cat) ? 1.12 : 1.0));
 }
-// Limitar copias por tipo a lo necesario para llenar la población máxima
-const maxCopiasUtiles = Math.min(cantDisponible, Math.floor(poblacionMaxima / pob));
-for (let i = 0; i < maxCopiasUtiles; i++) {
-copiasDisponibles.push({
-unidad: u,
-pob: pob,
-fc: fc,
-score: valorTactico
-});
-}
+const maxCopias = Math.min(cantDisp, Math.floor(poblacionMaxima / pob));
+for (let i = 0; i < maxCopias; i++) copiasDisponibles.push({ unidad: u, pob, fc, score });
 });
 if (copiasDisponibles.length === 0) {
 squadSummaryEl.style.display = "none";
-squadGridEl.innerHTML = 'No hay unidades disponibles en tu inventario que cumplan con los filtros y quepan en ' + poblacionMaxima + ' de población.';
+squadGridEl.innerHTML = 'No hay unidades disponibles en tu inventario que quepan en ' + poblacionMaxima + ' de población.';
 return;
 }
-// Algoritmo de Mochila (Knapsack 0/1) para encontrar la combinación exacta más fuerte
 const cap = poblacionMaxima;
 const dp = new Array(cap + 1).fill(0);
 const keep = Array.from({ length: copiasDisponibles.length }, () => new Uint8Array(cap + 1));
 for (let i = 0; i < copiasDisponibles.length; i++) {
 const item = copiasDisponibles[i];
 for (let w = cap; w >= item.pob; w--) {
-const nuevoValor = dp[w - item.pob] + item.score;
-if (nuevoValor > dp[w]) {
-dp[w] = nuevoValor;
+if (dp[w - item.pob] + item.score > dp[w]) {
+dp[w] = dp[w - item.pob] + item.score;
 keep[i][w] = 1;
 }
 }
 }
-// Reconstruir las unidades seleccionadas
-let wRestante = cap;
+let wRest = cap, pobUsada = 0, fcTotal = 0, totalTropas = 0;
 const agrupadas = {};
-let pobUsada = 0;
-let fcTotal = 0;
-let totalTropas = 0;
 for (let i = copiasDisponibles.length - 1; i >= 0; i--) {
-if (keep[i][wRestante] === 1) {
-const elegido = copiasDisponibles[i];
-const uid = String(elegido.unidad.id);
-if (!agrupadas[uid]) {
-agrupadas[uid] = {
-unidad: elegido.unidad,
-cantidad: 0,
-pobUnit: elegido.pob,
-fcUnit: elegido.fc
-};
-}
-agrupadas[uid].cantidad += 1;
-pobUsada += elegido.pob;
-fcTotal += elegido.fc;
-totalTropas += 1;
-wRestante -= elegido.pob;
+if (keep[i][wRest] === 1) {
+const el = copiasDisponibles[i], uid = String(el.unidad.id);
+if (!agrupadas[uid]) agrupadas[uid] = { unidad: el.unidad, cantidad: 0, pobUnit: el.pob, fcUnit: el.fc };
+agrupadas[uid].cantidad++;
+pobUsada += el.pob;
+fcTotal += el.fc;
+totalTropas++;
+wRest -= el.pob;
 }
 }
-// Renderizar resumen y tarjetas recomendadas
 squadSummaryEl.style.display = "flex";
 document.getElementById("sq-total-units").textContent = totalTropas.toLocaleString();
 document.getElementById("sq-used-pop").textContent = pobUsada + " / " + poblacionMaxima;
 document.getElementById("sq-total-fc").textContent = fcTotal.toLocaleString();
 squadGridEl.innerHTML = "";
-const listaFinal = Object.values(agrupadas).sort((a, b) => (b.fcUnit * b.cantidad) - (a.fcUnit * a.cantidad));
-ultimoEscuadronOptimo = listaFinal;
-listaFinal.forEach(grupo => {
+ultimoEscuadronOptimo = Object.values(agrupadas).sort((a, b) => (b.fcUnit * b.cantidad) - (a.fcUnit * a.cantidad));
+ultimoEscuadronOptimo.forEach(grupo => {
 const u = grupo.unidad;
 const card = crearElemento("div", "squad-card");
 card.appendChild(crearElemento("span", "squad-qty-badge", "x" + grupo.cantidad));
@@ -16115,66 +15863,21 @@ meta.innerHTML = "POB: " + (grupo.pobUnit * grupo.cantidad) + "" +
 card.appendChild(meta);
 squadGridEl.appendChild(card);
 });
-}
-if (btnGenerateSquad) {
-btnGenerateSquad.addEventListener("click", generarRecomendacionEjercito);
-}
-// =========================================
-// COMPARADOR LADO A LADO (4 RANURAS CON BUSCADOR Y NIVEL)
-// =========================================
-const sortSelectEl = document.getElementById("sort-select");
-if (sortSelectEl) sortSelectEl.addEventListener("change", filtrar);
-function configurarRanuraComparador(slot) {
-const inputEl = document.getElementById("comp-search-" + slot);
-const hiddenIdEl = document.getElementById("comp-id-" + slot);
-const dropdownEl = document.getElementById("comp-dropdown-" + slot);
-const levelEl = document.getElementById("comp-level-" + slot);
-if (!inputEl || !hiddenIdEl || !dropdownEl) return;
-function mostrarOpciones(filtroTexto) {
-dropdownEl.innerHTML = "";
-const termino = filtroTexto.toLowerCase().trim();
-const coincidencias = todasLasUnidades.filter(u =>
-u.estadisticas &&
-(u.nombre.toLowerCase().includes(termino) ||
-String(u.id).includes(termino) ||
-(u.faccion && u.faccion.toLowerCase().includes(termino)))
-).slice(0, 30);
-if (coincidencias.length === 0) {
-dropdownEl.appendChild(crearElemento("div", "sim-no-results", "Sin coincidencias"));
-} else {
-coincidencias.forEach(u => {
-const item = crearElemento("div", "sim-option-item");
-if (u.imagen_ruta) {
-const miniImg = document.createElement("img");
-miniImg.src = u.imagen_ruta;
-miniImg.alt = u.nombre;
-item.appendChild(miniImg);
-}
-item.appendChild(crearElemento("span", "", "#" + u.id + " - " + u.nombre));
-item.addEventListener("mousedown", (e) => {
-e.preventDefault();
-hiddenIdEl.value = String(u.id);
-inputEl.value = "#" + u.id + " - " + u.nombre;
-dropdownEl.classList.remove("open");
-renderizarComparador();
 });
-dropdownEl.appendChild(item);
+// Comparador Lado a Lado (4 Ranuras)
+document.getElementById("sort-select")?.addEventListener("change", filtrar);
+const unidadesConStats = todasLasUnidades.filter(u => u.estadisticas);
+[1, 2, 3, 4].forEach(slot => {
+crearBuscadorUnidades({
+inputEl: document.getElementById("comp-search-" + slot),
+hiddenEl: document.getElementById("comp-id-" + slot),
+dropdownEl: document.getElementById("comp-dropdown-" + slot),
+listaOrigen: unidadesConStats,
+onSelect: renderizarComparador
 });
-}
-dropdownEl.classList.add("open");
-}
-inputEl.addEventListener("focus", () => {
-inputEl.select();
-mostrarOpciones("");
+document.getElementById("comp-level-" + slot)?.addEventListener("change", renderizarComparador);
 });
-inputEl.addEventListener("input", () => mostrarOpciones(inputEl.value));
-inputEl.addEventListener("blur", () => setTimeout(() => dropdownEl.classList.remove("open"), 150));
-if (levelEl) levelEl.addEventListener("change", renderizarComparador);
-}
-[1, 2, 3, 4].forEach(slot => configurarRanuraComparador(slot));
-const btnClearCompare = document.getElementById("btn-clear-compare");
-if (btnClearCompare) {
-btnClearCompare.addEventListener("click", () => {
+document.getElementById("btn-clear-compare")?.addEventListener("click", () => {
 [1, 2, 3, 4].forEach(slot => {
 const inp = document.getElementById("comp-search-" + slot);
 const hid = document.getElementById("comp-id-" + slot);
@@ -16185,7 +15888,6 @@ if (lvl) lvl.value = "1";
 });
 renderizarComparador();
 });
-}
 function renderizarComparador() {
 const wrapper = document.getElementById("compare-wrapper");
 const badge = document.getElementById("compare-badge");
@@ -16194,9 +15896,7 @@ const seleccionadas = [];
 [1, 2, 3, 4].forEach(slot => {
 const uid = document.getElementById("comp-id-" + slot)?.value;
 const nvl = parseInt(document.getElementById("comp-level-" + slot)?.value) || 1;
-if (uid && mapaUnidades[uid]) {
-seleccionadas.push({ slot, unidad: mapaUnidades[uid], nivel: nvl });
-}
+if (uid && mapaUnidades[uid]) seleccionadas.push({ slot, unidad: mapaUnidades[uid], nivel: nvl });
 });
 if (badge) badge.textContent = seleccionadas.length + " / 4 ACTIVOS";
 if (seleccionadas.length === 0) {
@@ -16204,18 +15904,18 @@ wrapper.innerHTML = 'Selecciona unidades en las ranuras de arriba para ver su ta
 return;
 }
 const metricas = [
-{ label: "VIDA (SEGÚN NIVEL)", get: item => obtenerStatsPorNivel(item.unidad, item.nivel).vida, max: true },
-{ label: "ATAQUE (SEGÚN NIVEL)", get: item => obtenerStatsPorNivel(item.unidad, item.nivel).ataque, max: true },
-{ label: "RANGO", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.rango) || 0, max: true },
-{ label: "VELOCIDAD", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.velocidad) || 0, max: true },
-{ label: "ELABORACIÓN (SEG)", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.elaboracion) || 0, max: false },
-{ label: "POBLACIÓN", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.poblacion) || 0, max: false },
-{ label: "FUERZA DE COMBATE", get: item => (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0, max: true },
+{ label: "VIDA (SEGÚN NIVEL)", get: it => obtenerStatsPorNivel(it.unidad, it.nivel).vida, max: true },
+{ label: "ATAQUE (SEGÚN NIVEL)", get: it => obtenerStatsPorNivel(it.unidad, it.nivel).ataque, max: true },
+{ label: "RANGO", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.rango) || 0, max: true },
+{ label: "VELOCIDAD", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.velocidad) || 0, max: true },
+{ label: "ELABORACIÓN (SEG)", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.elaboracion) || 0, max: false },
+{ label: "POBLACIÓN", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.poblacion) || 0, max: false },
+{ label: "FUERZA DE COMBATE", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.fuerza_combate) || 0, max: true },
 {
 label: "EFICIENCIA (FC / POB)",
-get: item => {
-const p = (item.unidad.estadisticas && item.unidad.estadisticas.poblacion) || 0;
-const f = (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0;
+get: it => {
+const p = (it.unidad.estadisticas && it.unidad.estadisticas.poblacion) || 0;
+const f = (it.unidad.estadisticas && it.unidad.estadisticas.fuerza_combate) || 0;
 return p > 0 ? Math.round(f / p) : 0;
 },
 max: true
@@ -16225,8 +15925,8 @@ const tabla = crearElemento("table", "compare-table");
 const thead = crearElemento("thead");
 const trHead = crearElemento("tr");
 trHead.appendChild(crearElemento("th", "", "ATRIBUTO"));
-seleccionadas.forEach(item => {
-const u = item.unidad;
+seleccionadas.forEach(it => {
+const u = it.unidad;
 const th = crearElemento("th");
 if (u.imagen_ruta) {
 const img = document.createElement("img");
@@ -16234,12 +15934,12 @@ img.src = u.imagen_ruta;
 img.className = "compare-unit-img";
 th.appendChild(img);
 }
-th.appendChild(crearElemento("div", "", "#" + u.id + " " + u.nombre + " (NVL " + item.nivel + ")"));
+th.appendChild(crearElemento("div", "", "#" + u.id + " " + u.nombre + " (NVL " + it.nivel + ")"));
 const btnRem = crearElemento("button", "btn-backup btn-reset-inv", "QUITAR");
 btnRem.style.marginTop = "6px";
 btnRem.onclick = () => {
-document.getElementById("comp-search-" + item.slot).value = "";
-document.getElementById("comp-id-" + item.slot).value = "";
+document.getElementById("comp-search-" + it.slot).value = "";
+document.getElementById("comp-id-" + it.slot).value = "";
 renderizarComparador();
 };
 th.appendChild(btnRem);
@@ -16251,15 +15951,12 @@ const tbody = crearElemento("tbody");
 metricas.forEach(m => {
 const tr = crearElemento("tr");
 tr.appendChild(crearElemento("td", "metric-label", m.label));
-const valores = seleccionadas.map(item => m.get(item));
-const mejorValor = m.max
-? Math.max(...valores)
-: Math.min(...valores.filter(v => v > 0));
-seleccionadas.forEach((item, idx) => {
-const valNum = valores.at(idx);
-const esMejor = valNum > 0 && valNum === mejorValor && seleccionadas.length > 1;
-const td = crearElemento("td", esMejor ? "best-stat" : "", valNum > 0 ? valNum.toLocaleString() : "---");
-tr.appendChild(td);
+const valores = seleccionadas.map(it => m.get(it));
+const mejor = m.max ? Math.max(...valores) : Math.min(...valores.filter(v => v > 0));
+seleccionadas.forEach((it, idx) => {
+const v = valores.at(idx);
+const esMejor = v > 0 && v === mejor && seleccionadas.length > 1;
+tr.appendChild(crearElemento("td", esMejor ? "best-stat" : "", v > 0 ? v.toLocaleString() : "---"));
 });
 tbody.appendChild(tr);
 });
@@ -16267,12 +15964,8 @@ tabla.appendChild(tbody);
 wrapper.innerHTML = "";
 wrapper.appendChild(tabla);
 }
-// =========================================
-// GENERADOR DE TARJETA DE PERFIL PNG COMPARTIBLE
-// =========================================
-const btnGenProfileCard = document.getElementById("btn-gen-profile-card");
-if (btnGenProfileCard) {
-btnGenProfileCard.addEventListener("click", () => {
+// Generador de Tarjeta PNG Compartible
+document.getElementById("btn-gen-profile-card")?.addEventListener("click", () => {
 const alias = prompt("Ingresa tu Alias de Comandante para tu ficha táctica:", "Comandante");
 if (alias === null) return;
 const canvas = document.createElement("canvas");
@@ -16296,15 +15989,14 @@ const unicos = Object.keys(miColeccion).length;
 let tropas = 0, fcAlm = 0, fcMap = 0;
 const topUnidades = [];
 Object.keys(miColeccion).forEach(id => {
-const r = miColeccion[id];
-const u = mapaUnidades[id];
+const r = miColeccion[id], u = mapaUnidades[id];
 const cant = (r.almacen || 0) + (r.trabajando || 0) + (r.mapa || 0);
 if (cant > 0 && u) {
 tropas += cant;
 const fc = (u.estadisticas && u.estadisticas.fuerza_combate) || 0;
 fcAlm += (r.almacen || 0) * fc;
 fcMap += ((r.mapa || 0) + (r.trabajando || 0)) * fc;
-topUnidades.push({ nombre: u.nombre, fc: fc, cant: cant });
+topUnidades.push({ nombre: u.nombre, fc, cant });
 }
 });
 topUnidades.sort((a, b) => b.fc - a.fc);
@@ -16331,43 +16023,8 @@ document.body.appendChild(enlace);
 enlace.click();
 enlace.remove();
 });
-}
-// =========================================
-// SIMULADOR DE BATALLA GRUPAL (EJÉRCITO VS EJÉRCITO)
-// =========================================
-let ejercito1 = [];
-let ejercito2 = [];
-function configurarBuscadorEjercito(num) {
-const input = document.getElementById("army" + num + "-search");
-const dropdown = document.getElementById("army" + num + "-dropdown");
-const hiddenId = document.getElementById("army" + num + "-selected-id");
-if (!input || !dropdown || !hiddenId) return;
-input.addEventListener("input", () => {
-const q = input.value.toLowerCase().trim();
-dropdown.innerHTML = "";
-if (!q) {
-dropdown.classList.remove("open");
-return;
-}
-const matches = unidadesCombatientes.filter(u =>
-u.nombre.toLowerCase().includes(q) || String(u.id).includes(q)
-).slice(0, 20);
-matches.forEach(u => {
-const div = crearElemento("div", "sim-option-item", "#" + u.id + " - " + u.nombre);
-div.addEventListener("mousedown", (e) => {
-e.preventDefault();
-hiddenId.value = String(u.id);
-input.value = "#" + u.id + " - " + u.nombre;
-dropdown.classList.remove("open");
-});
-dropdown.appendChild(div);
-});
-dropdown.classList.toggle("open", matches.length > 0);
-});
-input.addEventListener("blur", () => setTimeout(() => dropdown.classList.remove("open"), 150));
-}
-configurarBuscadorEjercito(1);
-configurarBuscadorEjercito(2);
+// Simulador de Batalla Grupal
+let ejercito1 = [], ejercito2 = [];
 function renderizarEjercito(num) {
 const lista = num === 1 ? ejercito1 : ejercito2;
 const rosterEl = document.getElementById("army" + num + "-roster");
@@ -16382,92 +16039,68 @@ rosterEl.innerHTML = "";
 let vidaTotal = 0, ataqueTotal = 0, fcTotal = 0;
 lista.forEach((item, idx) => {
 const st = item.unidad.estadisticas || {};
-const v = (st.vida || 0) * item.cantidad;
-const a = (st.ataque || 0) * item.cantidad;
 const f = (st.fuerza_combate || 0) * item.cantidad;
-vidaTotal += v;
-ataqueTotal += a;
+vidaTotal += (st.vida || 0) * item.cantidad;
+ataqueTotal += (st.ataque || 0) * item.cantidad;
 fcTotal += f;
 const row = crearElemento("div", "roster-item");
 row.appendChild(crearElemento("span", "", "x" + item.cantidad + " " + item.unidad.nombre + " (FC: " + f.toLocaleString() + ")"));
 const btnDel = crearElemento("button", "qty-btn", "×");
-btnDel.onclick = () => {
-lista.splice(idx, 1);
-renderizarEjercito(num);
-};
+btnDel.onclick = () => { lista.splice(idx, 1); renderizarEjercito(num); };
 row.appendChild(btnDel);
 rosterEl.appendChild(row);
 });
 totalsEl.textContent = "VIDA: " + vidaTotal.toLocaleString() + " | ATAQUE: " + ataqueTotal.toLocaleString() + " | FC: " + fcTotal.toLocaleString();
 }
 [1, 2].forEach(num => {
-const btnAdd = document.getElementById("btn-add-army-" + num);
-const btnClear = document.getElementById("btn-clear-army-" + num);
-if (btnAdd) {
-btnAdd.addEventListener("click", () => {
+crearBuscadorUnidades({
+inputEl: document.getElementById("army" + num + "-search"),
+hiddenEl: document.getElementById("army" + num + "-selected-id"),
+dropdownEl: document.getElementById("army" + num + "-dropdown"),
+listaOrigen: unidadesCombatientes
+});
+document.getElementById("btn-add-army-" + num)?.addEventListener("click", () => {
 const uid = document.getElementById("army" + num + "-selected-id").value;
 const qty = Math.max(1, parseInt(document.getElementById("army" + num + "-qty").value) || 1);
 const u = mapaUnidades[uid];
-if (!u) {
-alert("Primero busca y selecciona una unidad de la lista desplegable.");
-return;
-}
+if (!u) { alert("Primero busca y selecciona una unidad de la lista desplegable."); return; }
 const lista = num === 1 ? ejercito1 : ejercito2;
 const existente = lista.find(x => String(x.unidad.id) === uid);
 if (existente) existente.cantidad += qty;
 else lista.push({ unidad: u, cantidad: qty });
 renderizarEjercito(num);
 });
-}
-if (btnClear) {
-btnClear.addEventListener("click", () => {
-if (num === 1) ejercito1 = [];
-else ejercito2 = [];
+document.getElementById("btn-clear-army-" + num)?.addEventListener("click", () => {
+if (num === 1) ejercito1 = []; else ejercito2 = [];
 renderizarEjercito(num);
 });
-}
 });
-const btnLoadOptimalArmy = document.getElementById("btn-load-optimal-army");
-if (btnLoadOptimalArmy) {
-btnLoadOptimalArmy.addEventListener("click", () => {
-if (!ultimoEscuadronOptimo || ultimoEscuadronOptimo.length === 0) {
+document.getElementById("btn-load-optimal-army")?.addEventListener("click", () => {
+if (!ultimoEscuadronOptimo.length) {
 alert("Primero genera tu Escuadrón Óptimo en la sección anterior.");
 return;
 }
 ejercito1 = ultimoEscuadronOptimo.map(g => ({ unidad: g.unidad, cantidad: g.cantidad }));
 renderizarEjercito(1);
 });
-}
-const btnLoadBossArmy = document.getElementById("btn-load-boss-army");
-if (btnLoadBossArmy) {
-btnLoadBossArmy.addEventListener("click", () => {
-const diffSelect = document.getElementById("ai-difficulty");
-const multiplicador = diffSelect ? (parseFloat(diffSelect.value) || 1.0) : 1.0;
+document.getElementById("btn-load-boss-army")?.addEventListener("click", () => {
+const mult = parseFloat(document.getElementById("ai-difficulty")?.value) || 1.0;
 let fcAliado = 0;
-ejercito1.forEach(item => {
-const fc = (item.unidad.estadisticas && item.unidad.estadisticas.fuerza_combate) || 0;
-fcAliado += fc * item.cantidad;
-});
-const fcBase = fcAliado > 0 ? fcAliado : 200000;
-const fcObjetivo = Math.round(fcBase * multiplicador);
-const poolSize = multiplicador <= 1.0 ? 45 : 25;
+ejercito1.forEach(it => { fcAliado += ((it.unidad.estadisticas && it.unidad.estadisticas.fuerza_combate) || 0) * it.cantidad; });
+const fcObjetivo = Math.round((fcAliado > 0 ? fcAliado : 200000) * mult);
 const topElite = [...unidadesCombatientes]
 .filter(u => (u.estadisticas.fuerza_combate || 0) > 0)
 .sort((a, b) => (b.estadisticas.fuerza_combate || 0) - (a.estadisticas.fuerza_combate || 0))
-.slice(0, poolSize);
-if (topElite.length === 0) return;
+.slice(0, mult <= 1.0 ? 45 : 25);
+if (!topElite.length) return;
 const mapaEnemigo = {};
-let fcAcumulado = 0;
-let intentos = 0;
-while (fcAcumulado < fcObjetivo && intentos < 250) {
+let fcAcum = 0, intentos = 0;
+while (fcAcum < fcObjetivo && intentos < 250) {
 const elegida = topElite[Math.floor(Math.random() * topElite.length)];
-const fcUnit = elegida.estadisticas.fuerza_combate || 0;
 const uid = String(elegida.id);
-if (!mapaEnemigo[uid]) {
-mapaEnemigo[uid] = { unidad: elegida, cantidad: 0 };
-}
-mapaEnemigo[uid].cantidad += 1;
-fcAcumulado += fcUnit;
+if (!mapaEnemigo[uid]) mapaEnemigo[uid] = { unidad: elegida, cantidad: 0 };
+mapaEnemigo[uid].cantidad++;
+fcAcum += elegida.estadisticas.fuerza_combate || 0;
 intentos++;
 }
 ejercito2 = Object.values(mapaEnemigo).sort(
@@ -16475,47 +16108,33 @@ ejercito2 = Object.values(mapaEnemigo).sort(
 );
 renderizarEjercito(2);
 });
-}
-const btnRunGroupBattle = document.getElementById("btn-run-group-battle");
-if (btnRunGroupBattle) {
-btnRunGroupBattle.addEventListener("click", () => {
+document.getElementById("btn-run-group-battle")?.addEventListener("click", () => {
 const resBox = document.getElementById("group-battle-result");
-if (ejercito1.length === 0 || ejercito2.length === 0) {
+if (!ejercito1.length || !ejercito2.length) {
 alert("Ambos ejércitos deben tener al menos una unidad.");
 return;
 }
-function calcularPoderGrupal(lista) {
+const calc = (lista) => {
 let hp = 0, dps = 0, rangoProm = 0, total = 0;
-lista.forEach(item => {
-const st = item.unidad.estadisticas || {};
-hp += (st.vida || 0) * item.cantidad;
-dps += (st.ataque || 0) * item.cantidad;
-rangoProm += (st.rango || 1) * item.cantidad;
-total += item.cantidad;
+lista.forEach(it => {
+const st = it.unidad.estadisticas || {};
+hp += (st.vida || 0) * it.cantidad;
+dps += (st.ataque || 0) * it.cantidad;
+rangoProm += (st.rango || 1) * it.cantidad;
+total += it.cantidad;
 });
-const bonoAlcance = total > 0 ? 1 + ((rangoProm / total) * 0.03) : 1;
-return { hp, dps: Math.round(dps * bonoAlcance) };
-}
-const p1 = calcularPoderGrupal(ejercito1);
-const p2 = calcularPoderGrupal(ejercito2);
-const turnos1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
-const turnos2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
-resBox.innerHTML = "";
-if (turnos1 < turnos2) {
-resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO AZUL"));
-resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al enemigo en " + turnos1 + " oleadas de ataque."));
-} else if (turnos2 < turnos1) {
-resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO ROJO"));
-resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al aliado en " + turnos2 + " oleadas de ataque."));
-} else {
-resBox.appendChild(crearElemento("div", "sim-winner-title", "⚔ DESTRUCCIÓN MUTUA"));
-resBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos ejércitos caen en " + turnos1 + " oleadas."));
-}
+return { hp, dps: Math.round(dps * (total > 0 ? 1 + ((rangoProm / total) * 0.03) : 1)) };
+};
+const p1 = calc(ejercito1), p2 = calc(ejercito2);
+const t1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
+const t2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
+resBox.innerHTML = t1 < t2
+? '🏆 VICTORIA EJÉRCITO AZULAniquila al enemigo en ' + t1 + ' oleadas de ataque.'
+: t2 < t1
+? '🏆 VICTORIA EJÉRCITO ROJOAniquila al aliado en ' + t2 + ' oleadas de ataque.'
+: '⚔ DESTRUCCIÓN MUTUAAmbos ejércitos caen en ' + t1 + ' oleadas.';
 });
-}
-// =========================================
-// COPIAR CÓDIGO DEL BOOKMARKLET AL PORTAPAPELES
-// =========================================
+// Copiar código del Bookmarklet
 const btnCopyBookmarklet = document.getElementById("btn-copy-bookmarklet");
 const linkBookmarklet = document.querySelector(".btn-bookmarklet");
 if (btnCopyBookmarklet && linkBookmarklet) {
@@ -16523,17 +16142,13 @@ btnCopyBookmarklet.addEventListener("click", () => {
 const codigo = linkBookmarklet.getAttribute("href");
 if (navigator.clipboard && navigator.clipboard.writeText) {
 navigator.clipboard.writeText(codigo).then(() => {
-const textoOriginal = btnCopyBookmarklet.textContent;
+const txt = btnCopyBookmarklet.textContent;
 btnCopyBookmarklet.textContent = "✅ ¡CÓDIGO COPIADO!";
 alert("¡Código copiado! Crea un nuevo marcador en tu navegador, ponle de nombre 'Extraer Partida SW' y pega este código en el campo URL / Dirección.");
-setTimeout(() => {
-btnCopyBookmarklet.textContent = textoOriginal;
-}, 2500);
-}).catch(() => {
-prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
-});
+setTimeout(() => { btnCopyBookmarklet.textContent = txt; }, 2500);
+}).catch(() => prompt("Copia manualmente este código (Ctrl + C):", codigo));
 } else {
-prompt("Copia manualmente este código (Ctrl + C) y pégalo en la URL de un marcador nuevo:", codigo);
+prompt("Copia manualmente este código (Ctrl + C):", codigo);
 }
 });
 }

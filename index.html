@@ -16440,8 +16440,9 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
 
         const bgR = imgData.at(0), bgG = imgData.at(1), bgB = imgData.at(2), bgA = imgData.at(3);
         const fondoEsBlanco = !esCatalogo && (bgA > 200 && bgR > 225 && bgG > 225 && bgB > 225);
+        // Detectar si el recorte viene de la cámara oscura de Fusión Atómica (esquinas oscuras/cian)
+        const fondoEsCapsulaOscura = !esCatalogo && !fondoEsBlanco && (bgR < 95 && bgG < 115 && bgB < 125);
 
-        // Detectar si el recorte del usuario es una silueta blanca sobre fondo oscuro (Fusión Atómica)
         let blancosPuros = 0;
         const totalPx = w * h;
         for (let i = 0; i < imgData.length; i += 4) {
@@ -16469,7 +16470,13 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
                 } else if (fondoEsBlanco) {
                     const esTextoVerde = (g > r + 25 && g > b + 25 && y > h * 0.72);
                     esObjeto = (a > 128 && !esTextoVerde && (r < 230 || g < 230 || b < 230));
+                } else if (fondoEsCapsulaOscura) {
+                    // Excluir el fondo oscuro azulado de la cámara de fusión cuando la unidad ya salió a color
+                    const distFondoCapsula = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+                    const esSombraOscura = (r < 85 && g < 105 && b < 115);
+                    esObjeto = (!esSombraOscura && distFondoCapsula > 55);
                 } else {
+                    // Sprite del catálogo o recorte del mapa/almacén
                     const esCespedVerde = (g > r + 10 && g > b + 10 && g > 60);
                     const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
                     esObjeto = (a > 128 && !esCespedVerde && distEsquina > 35);
@@ -16510,7 +16517,6 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
             }
         }
 
-        // Normalizar histograma de color (porcentaje de cada tono en la unidad)
         const paleta = {};
         Object.keys(histColor).forEach(k => { paleta[k] = histColor[k] / activos; });
 
@@ -16528,7 +16534,7 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
         if (!firmaUser || !firmaCat) return 0;
         const diffRatio = Math.abs(firmaUser.ratio - firmaCat.ratio);
         const diffDensidad = Math.abs(firmaUser.densidad - firmaCat.densidad);
-        if (diffRatio > 0.95 || diffDensidad > 0.55) return 0;
+        if (diffRatio > 0.85 || diffDensidad > 0.45) return 0;
 
         let interNormal = 0, unionNormal = 0, interEspejo = 0, unionEspejo = 0;
         for (let i = 0; i < firmaUser.grid.length; i++) {
@@ -16541,20 +16547,19 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
 
         const iouNormal = unionNormal > 0 ? (interNormal / unionNormal) : 0;
         const iouEspejo = unionEspejo > 0 ? ((interEspejo / unionEspejo) * 1.05) : 0;
-        const scoreForma = Math.max(0, Math.max(iouNormal, iouEspejo) - (diffRatio * 0.14) - (diffDensidad * 0.18));
+        const scoreForma = Math.max(0, Math.max(iouNormal, iouEspejo) - (diffRatio * 0.16) - (diffDensidad * 0.22));
 
-        // Si es silueta pura (Fusión Atómica), evaluar solo forma
         if (firmaUser.esSilueta) {
             return Math.round(scoreForma * 100);
         }
 
-        // Si es imagen a color (Mapa, Almacén, Publicidad), combinar 55% Forma + 45% Similitud de Color
         let similitudColor = 0;
         Array.of("ROJO", "AZUL", "AMARILLO", "VERDE", "OSCURO").forEach(tono => {
             similitudColor += Math.min(firmaUser.paleta[tono] || 0, firmaCat.paleta[tono] || 0);
         });
 
-        const scoreTotal = (scoreForma * 0.55) + (similitudColor * 0.45);
+        // 70% Forma + 30% Color para que no confunda un dragón azul con un tanque azul
+        const scoreTotal = (scoreForma * 0.70) + (similitudColor * 0.30);
         return Math.max(0, Math.round(scoreTotal * 100));
     }
 

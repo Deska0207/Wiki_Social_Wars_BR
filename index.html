@@ -16369,80 +16369,107 @@ const silStatusBadge = document.getElementById("sil-status-badge");
 const silCatFilter = document.getElementById("sil-cat-filter");
 let ultimaImagenEscaneada = null;
 const cacheFirmasCatalogo = {};
-function extraerFirmaSilueta(imgElement, esCapturaJuego) {
-const w = imgElement.naturalWidth || imgElement.width;
-const h = imgElement.naturalHeight || imgElement.height;
-if (!w || !h) return null;
-const tmpCanvas = document.createElement("canvas");
-tmpCanvas.width = w;
-tmpCanvas.height = h;
-const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
-ctx.drawImage(imgElement, 0, 0, w, h);
-// Recortar exclusivamente el núcleo de la cámara de fusión (evitando tubos y luces superiores/inferiores)
-const sx = esCapturaJuego ? Math.floor(w * 0.34) : 0;
-const sy = esCapturaJuego ? Math.floor(h * 0.36) : 0;
-const sw = esCapturaJuego ? Math.floor(w * 0.32) : w;
-const sh = esCapturaJuego ? Math.floor(h * 0.32) : h;
-let imgData;
-try {
-imgData = ctx.getImageData(sx, sy, sw, sh).data;
-} catch (e) {
-return null;
-}
-const mask = new Uint8Array(sw * sh);
-const bgR = imgData.at(0);
-const bgG = imgData.at(1);
-const bgB = imgData.at(2);
-let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
-for (let y = 0; y < sh; y++) {
-for (let x = 0; x < sw; x++) {
-const idx = (y * sw + x) * 4;
-const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
-let esSilueta = false;
-if (esCapturaJuego) {
-esSilueta = (r > 240 && g > 245 && b > 245);
-} else {
-const esCespedVerde = (g > r + 15 && g > b + 15 && g > 70);
-const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-esSilueta = (a > 128 && !esCespedVerde && distEsquina > 40);
-}
-if (esSilueta) {
-mask[y * sw + x] = 1;
-if (x < minX) minX = x;
-if (x > maxX) maxX = x;
-if (y < minY) minY = y;
-if (y > maxY) maxY = y;
-activos++;
-}
-}
-}
-if (activos < 25 || maxX <= minX || maxY <= minY) return null;
-const SIZE = 32;
-const grid = new Uint8Array(SIZE * SIZE);
-const boxW = maxX - minX + 1;
-const boxH = maxY - minY + 1;
-for (let gy = 0; gy < SIZE; gy++) {
-const origY = minY + Math.floor((gy / SIZE) * boxH);
-for (let gx = 0; gx < SIZE; gx++) {
-const origX = minX + Math.floor((gx / SIZE) * boxW);
-grid[gy * SIZE + gx] = mask[origY * sw + origX];
-}
-}
-return { grid, ratio: boxW / boxH };
-}
-function calcularSimilitud(firmaA, firmaB) {
-if (!firmaA || !firmaB) return 0;
-const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
-if (diffRatio > 0.55) return 0;
-let interseccion = 0, union = 0;
-for (let i = 0; i < firmaA.grid.length; i++) {
-const a = firmaA.grid.at(i), b = firmaB.grid.at(i);
-if (a || b) union++;
-if (a && b) interseccion++;
-}
-if (union === 0) return 0;
-return Math.max(0, Math.round(((interseccion / union) - diffRatio * 0.2) * 100));
-}
+    function extraerFirmaSilueta(imgElement, esCapturaJuego) {
+        const w = imgElement.naturalWidth || imgElement.width;
+        const h = imgElement.naturalHeight || imgElement.height;
+        if (!w || !h) return null;
+
+        const tmpCanvas = document.createElement("canvas");
+        tmpCanvas.width = w;
+        tmpCanvas.height = h;
+        const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(imgElement, 0, 0, w, h);
+
+        // Enfocar la zona central de la cápsula de fusión
+        const sx = esCapturaJuego ? Math.floor(w * 0.35) : 0;
+        const sy = esCapturaJuego ? Math.floor(h * 0.37) : 0;
+        const sw = esCapturaJuego ? Math.floor(w * 0.30) : w;
+        const sh = esCapturaJuego ? Math.floor(h * 0.32) : h;
+
+        let imgData;
+        try {
+            imgData = ctx.getImageData(sx, sy, sw, sh).data;
+        } catch (e) {
+            return null;
+        }
+
+        const mask = new Uint8Array(sw * sh);
+        const bgR = imgData.at(0);
+        const bgG = imgData.at(1);
+        const bgB = imgData.at(2);
+
+        let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
+
+        for (let y = 0; y < sh; y++) {
+            for (let x = 0; x < sw; x++) {
+                const idx = (y * sw + x) * 4;
+                const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
+                let esSilueta = false;
+
+                if (esCapturaJuego) {
+                    // Blanco puro neutro: excluye el rayo verde/cian que tiene G y B mucho más altos que R
+                    const esBlancoPuro = (r > 242 && g > 242 && b > 242 && Math.abs(r - g) < 14 && Math.abs(r - b) < 14);
+                    esSilueta = esBlancoPuro;
+                } else {
+                    // En el catálogo: excluir transparencia, césped verde y el borde oscuro de la tarjeta
+                    const esCespedVerde = (g > r + 12 && g > b + 12 && g > 65);
+                    const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+                    esSilueta = (a > 128 && !esCespedVerde && distEsquina > 35);
+                }
+
+                if (esSilueta) {
+                    mask[y * sw + x] = 1;
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    activos++;
+                }
+            }
+        }
+
+        if (activos < 30 || maxX <= minX || maxY <= minY) return null;
+
+        const SIZE = 32;
+        const grid = new Uint8Array(SIZE * SIZE);
+        const boxW = maxX - minX + 1;
+        const boxH = maxY - minY + 1;
+        let rellenos = 0;
+
+        for (let gy = 0; gy < SIZE; gy++) {
+            const origY = minY + Math.floor((gy / SIZE) * boxH);
+            for (let gx = 0; gx < SIZE; gx++) {
+                const origX = minX + Math.floor((gx / SIZE) * boxW);
+                const val = mask[origY * sw + origX];
+                grid[gy * SIZE + gx] = val;
+                if (val) rellenos++;
+            }
+        }
+        return {
+            grid,
+            ratio: boxW / boxH,
+            densidad: rellenos / (SIZE * SIZE)
+        };
+    }
+
+    function calcularSimilitud(firmaA, firmaB) {
+        if (!firmaA || !firmaB) return 0;
+        const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
+        const diffDensidad = Math.abs(firmaA.densidad - firmaB.densidad);
+        if (diffRatio > 0.45 || diffDensidad > 0.30) return 0;
+
+        let interseccion = 0, union = 0;
+        for (let i = 0; i < firmaA.grid.length; i++) {
+            const a = firmaA.grid.at(i), b = firmaB.grid.at(i);
+            if (a || b) union++;
+            if (a && b) interseccion++;
+        }
+        if (union === 0) return 0;
+
+        const iou = interseccion / union;
+        const penalizacion = (diffRatio * 0.25) + (diffDensidad * 0.35);
+        return Math.max(0, Math.round((iou - penalizacion) * 100));
+    }
 function obtenerFirmaUnidadAsync(u) {
 if (cacheFirmasCatalogo[u.id] !== undefined) {
 return Promise.resolve(cacheFirmasCatalogo[u.id]);
@@ -16553,9 +16580,12 @@ break;
 }
 });
 actualizarBarraColeccion();
+requestAnimationFrame(() => {
 actualizarVista();
 renderizarFacciones();
 });
+});
+
 </script>
 </body>
 

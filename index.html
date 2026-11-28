@@ -16369,7 +16369,7 @@ const silStatusBadge = document.getElementById("sil-status-badge");
 const silCatFilter = document.getElementById("sil-cat-filter");
 let ultimaImagenEscaneada = null;
 const cacheFirmasCatalogo = {};
-    function extraerFirmaSilueta(imgElement, esCapturaJuego) {
+    function extraerFirmaSilueta(imgElement, modoCatalogo) {
         const w = imgElement.naturalWidth || imgElement.width;
         const h = imgElement.naturalHeight || imgElement.height;
         if (!w || !h) return null;
@@ -16380,23 +16380,29 @@ const cacheFirmasCatalogo = {};
         const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
         ctx.drawImage(imgElement, 0, 0, w, h);
 
-        // Enfocar la zona central de la cápsula de fusión
-        const sx = esCapturaJuego ? Math.floor(w * 0.35) : 0;
-        const sy = esCapturaJuego ? Math.floor(h * 0.37) : 0;
-        const sw = esCapturaJuego ? Math.floor(w * 0.30) : w;
-        const sh = esCapturaJuego ? Math.floor(h * 0.32) : h;
-
-        let imgData;
+        let imgFull;
         try {
-            imgData = ctx.getImageData(sx, sy, sw, sh).data;
+            imgFull = ctx.getImageData(0, 0, w, h).data;
         } catch (e) {
             return null;
         }
 
+        // Detectar si es captura completa de pantalla de Fusión Atómica (panorámica oscura con bordes de UI)
+        const p0 = (imgFull.at(0) + imgFull.at(1) + imgFull.at(2)) / 3;
+        const pDer = (imgFull.at((w - 1) * 4) + imgFull.at((w - 1) * 4 + 1) + imgFull.at((w - 1) * 4 + 2)) / 3;
+        const esPantallaFusion = !modoCatalogo && (w / h > 1.25) && (p0 < 120 && pDer < 120);
+
+        const sx = esPantallaFusion ? Math.floor(w * 0.35) : 0;
+        const sy = esPantallaFusion ? Math.floor(h * 0.37) : 0;
+        const sw = esPantallaFusion ? Math.floor(w * 0.30) : w;
+        const sh = esPantallaFusion ? Math.floor(h * 0.32) : h;
+
+        const imgData = ctx.getImageData(sx, sy, sw, sh).data;
         const mask = new Uint8Array(sw * sh);
-        const bgR = imgData.at(0);
-        const bgG = imgData.at(1);
-        const bgB = imgData.at(2);
+
+        // Detectar color de fondo de la esquina superior izquierda del recorte
+        const bgR = imgData.at(0), bgG = imgData.at(1), bgB = imgData.at(2), bgA = imgData.at(3);
+        const fondoEsBlanco = !modoCatalogo && !esPantallaFusion && (bgA > 200 && bgR > 230 && bgG > 230 && bgB > 230);
 
         let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
 
@@ -16406,12 +16412,14 @@ const cacheFirmasCatalogo = {};
                 const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
                 let esSilueta = false;
 
-                if (esCapturaJuego) {
-                    // Blanco puro neutro: excluye el rayo verde/cian que tiene G y B mucho más altos que R
-                    const esBlancoPuro = (r > 242 && g > 242 && b > 242 && Math.abs(r - g) < 14 && Math.abs(r - b) < 14);
-                    esSilueta = esBlancoPuro;
+                if (esPantallaFusion) {
+                    // Silueta blanca brillante dentro de la cámara oscura de fusión
+                    esSilueta = (r > 240 && g > 240 && b > 240 && Math.abs(r - g) < 16 && Math.abs(r - b) < 16);
+                } else if (fondoEsBlanco) {
+                    // Imagen recortada con fondo blanco (como el Spartan Mech subido)
+                    esSilueta = (a > 128 && (r < 235 || g < 235 || b < 235));
                 } else {
-                    // En el catálogo: excluir transparencia, césped verde y el borde oscuro de la tarjeta
+                    // Sprite del catálogo (fondo verde pasto o transparente)
                     const esCespedVerde = (g > r + 12 && g > b + 12 && g > 65);
                     const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
                     esSilueta = (a > 128 && !esCespedVerde && distEsquina > 35);
@@ -16428,10 +16436,11 @@ const cacheFirmasCatalogo = {};
             }
         }
 
-        if (activos < 30 || maxX <= minX || maxY <= minY) return null;
+        if (activos < 25 || maxX <= minX || maxY <= minY) return null;
 
         const SIZE = 32;
         const grid = new Uint8Array(SIZE * SIZE);
+        const gridEspejo = new Uint8Array(SIZE * SIZE);
         const boxW = maxX - minX + 1;
         const boxH = maxY - minY + 1;
         let rellenos = 0;
@@ -16442,11 +16451,13 @@ const cacheFirmasCatalogo = {};
                 const origX = minX + Math.floor((gx / SIZE) * boxW);
                 const val = mask[origY * sw + origX];
                 grid[gy * SIZE + gx] = val;
+                gridEspejo[gy * SIZE + (SIZE - 1 - gx)] = val;
                 if (val) rellenos++;
             }
         }
         return {
             grid,
+            gridEspejo,
             ratio: boxW / boxH,
             densidad: rellenos / (SIZE * SIZE)
         };
@@ -16458,51 +16469,64 @@ const cacheFirmasCatalogo = {};
         const diffDensidad = Math.abs(firmaA.densidad - firmaB.densidad);
         if (diffRatio > 0.45 || diffDensidad > 0.30) return 0;
 
-        let interseccion = 0, union = 0;
-        for (let i = 0; i < firmaA.grid.length; i++) {
-            const a = firmaA.grid.at(i), b = firmaB.grid.at(i);
-            if (a || b) union++;
-            if (a && b) interseccion++;
-        }
-        if (union === 0) return 0;
+        let interNormal = 0, unionNormal = 0;
+        let interEspejo = 0, unionEspejo = 0;
 
-        const iou = interseccion / union;
+        for (let i = 0; i < firmaA.grid.length; i++) {
+            const a = firmaA.grid.at(i);
+            const b1 = firmaB.grid.at(i);
+            const b2 = firmaB.gridEspejo.at(i);
+
+            if (a || b1) unionNormal++;
+            if (a && b1) interNormal++;
+
+            if (a || b2) unionEspejo++;
+            if (a && b2) interEspejo++;
+        }
+
+        const iouNormal = unionNormal > 0 ? (interNormal / unionNormal) : 0;
+        const iouEspejo = unionEspejo > 0 ? (interEspejo / unionEspejo) : 0;
+        const mejorIou = Math.max(iouNormal, iouEspejo);
+
         const penalizacion = (diffRatio * 0.25) + (diffDensidad * 0.35);
-        return Math.max(0, Math.round((iou - penalizacion) * 100));
+        return Math.max(0, Math.round((mejorIou - penalizacion) * 100));
     }
-function obtenerFirmaUnidadAsync(u) {
-if (cacheFirmasCatalogo[u.id] !== undefined) {
-return Promise.resolve(cacheFirmasCatalogo[u.id]);
-}
-return new Promise(resolve => {
-const imgCat = new Image();
-imgCat.crossOrigin = "anonymous";
-const timer = setTimeout(() => {
-cacheFirmasCatalogo[u.id] = null;
-resolve(null);
-}, 3000);
-imgCat.onload = () => {
-clearTimeout(timer);
-const firma = extraerFirmaSilueta(imgCat, false);
-cacheFirmasCatalogo[u.id] = firma;
-resolve(firma);
-};
-imgCat.onerror = () => {
-clearTimeout(timer);
-cacheFirmasCatalogo[u.id] = null;
-resolve(null);
-};
-imgCat.src = u.imagen_ruta;
-});
-}
-async function procesarCapturaSilueta(imgUsuario) {
-if (!silMatchesGrid) return;
-ultimaImagenEscaneada = imgUsuario;
-if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
-silMatchesGrid.innerHTML = "";
-silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Analizando silueta en paralelo..."));
-let firmaObjetivo = extraerFirmaSilueta(imgUsuario, true);
-if (!firmaObjetivo) firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
+
+    function obtenerFirmaUnidadAsync(u) {
+        if (cacheFirmasCatalogo[u.id] !== undefined) {
+            return Promise.resolve(cacheFirmasCatalogo[u.id]);
+        }
+        return new Promise(resolve => {
+            const imgCat = new Image();
+            imgCat.crossOrigin = "anonymous";
+            const timer = setTimeout(() => {
+                cacheFirmasCatalogo[u.id] = null;
+                resolve(null);
+            }, 3000);
+
+            imgCat.onload = () => {
+                clearTimeout(timer);
+                const firma = extraerFirmaSilueta(imgCat, true);
+                cacheFirmasCatalogo[u.id] = firma;
+                resolve(firma);
+            };
+            imgCat.onerror = () => {
+                clearTimeout(timer);
+                cacheFirmasCatalogo[u.id] = null;
+                resolve(null);
+            };
+            imgCat.src = u.imagen_ruta;
+        });
+    }
+
+    async function procesarCapturaSilueta(imgUsuario) {
+        if (!silMatchesGrid) return;
+        ultimaImagenEscaneada = imgUsuario;
+        if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
+        silMatchesGrid.innerHTML = "";
+        silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Analizando silueta en paralelo..."));
+
+        const firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
 if (!firmaObjetivo) {
 if (silStatusBadge) silStatusBadge.textContent = "SILUETA NO DETECTADA";
 silMatchesGrid.innerHTML = "";

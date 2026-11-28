@@ -15453,13 +15453,22 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         const tabla = crearElemento("table", "levels-table");
-        tabla.innerHTML = "<thead><tr><th>NIVEL</th><th>VIDA</th><th>ATAQUE</th></tr></thead>";
+        const thead = crearElemento("thead");
+        const trH = crearElemento("tr");
+        Array.of("NIVEL", "VIDA", "ATAQUE").forEach(txt => trH.appendChild(crearElemento("th", "", txt)));
+        thead.appendChild(trH);
+        tabla.appendChild(thead);
+
         const tbody = crearElemento("tbody");
         ESCALADO_NIVELES.forEach(item => {
             const tr = crearElemento("tr", item.nivel === 10 ? "max-level-row" : "");
-            tr.innerHTML = "<td><strong>NVL " + item.nivel + "</strong></td><td>" +
-                Math.round(vidaBase * item.multVida).toLocaleString() + "</td><td>" +
-                (ataqueBase + item.sumaAtaque).toLocaleString() + "</td>";
+            const td1 = crearElemento("td");
+            td1.appendChild(crearElemento("strong", "", "NVL " + item.nivel));
+            tr.append(
+                td1,
+                crearElemento("td", "", Math.round(vidaBase * item.multVida).toLocaleString()),
+                crearElemento("td", "", (ataqueBase + item.sumaAtaque).toLocaleString())
+            );
             tbody.appendChild(tr);
         });
         tabla.appendChild(tbody);
@@ -15484,13 +15493,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cardsGrid.innerHTML = "";
         const total = unidadesFiltradas.length;
         const inicio = (paginaActual - 1) * porPagina;
-        const fin = Math.min(inicio + porPagina, total);
-        const paginaItems = unidadesFiltradas.slice(inicio, fin);
-
-        if (counterBadge) {
-            counterBadge.textContent = total > 0
-                ? "MOSTRANDO " + (inicio + 1) + "-" + fin + " DE " + total + " REGISTROS"
-                : "0 REGISTROS ENCONTRADOS";
+const fin = Math.min(inicio + porPagina, total);
+const paginaItems = unidadesFiltradas.slice(inicio, fin);
+if (counterBadge) {
+counterBadge.textContent = total > 0
+? "MOSTRANDO " + (inicio + 1) + "-" + fin + " DE " + total + " REGISTROS"
+: "0 REGISTROS ENCONTRADOS";
 }
 paginaItems.forEach(u => {
 const cat = obtenerEtiquetas(u);
@@ -15895,21 +15903,28 @@ const imgBox = document.getElementById("sim-img-" + slot);
 const statsBox = document.getElementById("sim-stats-" + slot);
 if (nameEl) nameEl.textContent = u.nombre + " (NVL " + nvl + ")";
 if (imgBox) {
-imgBox.innerHTML = u.imagen_ruta
-? ''
-: 'SIN IMAGEN';
+imgBox.innerHTML = "";
+if (u.imagen_ruta) {
+const img = document.createElement("img");
+img.src = u.imagen_ruta;
+img.alt = u.nombre;
+imgBox.appendChild(img);
+} else {
+imgBox.appendChild(crearElemento("div", "no-image-placeholder", "SIN IMAGEN"));
+}
 }
 if (statsBox) {
 statsBox.innerHTML = "";
 Array.of(
 Array.of("VIDA", st.vida.toLocaleString()),
 Array.of("ATAQUE", st.ataque.toLocaleString()),
-Array.of("RANGO", st.rango),
-Array.of("VELOCIDAD", st.velocidad),
+Array.of("RANGO", String(st.rango)),
+Array.of("VELOCIDAD", String(st.velocidad)),
 Array.of("FC BASE", st.fuerza.toLocaleString())
 ).forEach(par => {
 const item = crearElemento("div", "sim-stat-item");
-item.innerHTML = "" + par.at(0) + "" + par.at(1) + "";
+item.appendChild(crearElemento("span", "", par.at(0)));
+item.appendChild(crearElemento("strong", "", par.at(1)));
 statsBox.appendChild(item);
 });
 }
@@ -15941,17 +15956,17 @@ const resBox = document.getElementById("sim-result-box");
 resBox.innerHTML = "";
 if (t1 < t2) {
 const hpRest = Math.max(1, s1.vida - (Math.max(0, golpes2 - 1 - r1) * s2.ataque));
-resBox.innerHTML = '🏆 GANADOR: ' + u1.nombre.toUpperCase() + '' +
-'Derrota al rival en ' + golpes2 + ' golpes.' +
-'Vida restante estimada: ' + hpRest.toLocaleString() + ' HP.';
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 GANADOR: " + u1.nombre.toUpperCase()));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Derrota al rival en " + golpes2 + " golpes."));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Vida restante estimada: " + hpRest.toLocaleString() + " HP."));
 } else if (t2 < t1) {
 const hpRest = Math.max(1, s2.vida - (Math.max(0, golpes1 - 1 - r2) * s1.ataque));
-resBox.innerHTML = '🏆 GANADOR: ' + u2.nombre.toUpperCase() + '' +
-'Derrota al rival en ' + golpes1 + ' golpes.' +
-'Vida restante estimada: ' + hpRest.toLocaleString() + ' HP.';
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 GANADOR: " + u2.nombre.toUpperCase()));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Derrota al rival en " + golpes1 + " golpes."));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Vida restante estimada: " + hpRest.toLocaleString() + " HP."));
 } else {
-resBox.innerHTML = '⚔ EMPATE TÉCNICO' +
-'Ambos necesitan ' + golpes2 + ' golpes para derrotarse.';
+resBox.appendChild(crearElemento("div", "sim-winner-title", "⚔ EMPATE TÉCNICO"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos necesitan " + golpes2 + " golpes para derrotarse."));
 }
 });
 }
@@ -15964,7 +15979,8 @@ if (!squadGridEl) return;
 if (squadPopBadgeEl) squadPopBadgeEl.textContent = "POBLACIÓN OBJETIVO: " + poblacionMaxima;
 if (poblacionMaxima <= 0) {
 squadSummaryEl.style.display = "none";
-squadGridEl.innerHTML = 'Primero configura tu Población Máxima (con los botones +5 arriba o importando tu partida).';
+squadGridEl.innerHTML = "";
+squadGridEl.appendChild(crearElemento("p", "sim-placeholder-text", "Primero configura tu Población Máxima (con los botones +5 arriba o importando tu partida)."));
 return;
 }
 const incluirTrabajando = document.getElementById("squad-include-working")?.checked || false;
@@ -15989,7 +16005,8 @@ for (let i = 0; i < maxCopias; i++) copiasDisponibles.push({ unidad: u, pob, fc,
 });
 if (copiasDisponibles.length === 0) {
 squadSummaryEl.style.display = "none";
-squadGridEl.innerHTML = 'No hay unidades disponibles en tu inventario que quepan en ' + poblacionMaxima + ' de población.';
+squadGridEl.innerHTML = "";
+squadGridEl.appendChild(crearElemento("p", "sim-placeholder-text", "No hay unidades disponibles en tu inventario que quepan en " + poblacionMaxima + " de población."));
 return;
 }
 const cap = poblacionMaxima;
@@ -16035,8 +16052,11 @@ card.appendChild(img);
 }
 card.appendChild(crearElemento("h4", "", u.nombre));
 const meta = crearElemento("div", "squad-card-meta");
-meta.innerHTML = "POB: " + (grupo.pobUnit * grupo.cantidad) + "" +
-"FC: " + (grupo.fcUnit * grupo.cantidad).toLocaleString() + "";
+const sPob = crearElemento("span", "", "POB: ");
+sPob.appendChild(crearElemento("strong", "", String(grupo.pobUnit * grupo.cantidad)));
+const sFc = crearElemento("span", "", "FC: ");
+sFc.appendChild(crearElemento("strong", "", (grupo.fcUnit * grupo.cantidad).toLocaleString()));
+meta.append(sPob, sFc);
 card.appendChild(meta);
 squadGridEl.appendChild(card);
 });
@@ -16077,7 +16097,8 @@ if (uid && mapaUnidades[uid]) seleccionadas.push({ slot, unidad: mapaUnidades[ui
 });
 if (badge) badge.textContent = seleccionadas.length + " / 4 ACTIVOS";
 if (seleccionadas.length === 0) {
-wrapper.innerHTML = 'Selecciona unidades en las ranuras de arriba para ver su tabla comparativa.';
+wrapper.innerHTML = "";
+wrapper.appendChild(crearElemento("p", "sim-placeholder-text", "Selecciona unidades en las ranuras de arriba para ver su tabla comparativa."));
 return;
 }
 const metricas = Array.of(
@@ -16208,7 +16229,8 @@ const rosterEl = document.getElementById("army" + num + "-roster");
 const totalsEl = document.getElementById("army" + num + "-totals");
 if (!rosterEl || !totalsEl) return;
 if (lista.length === 0) {
-rosterEl.innerHTML = 'Ejército vacío. Añade tropas arriba.';
+rosterEl.innerHTML = "";
+rosterEl.appendChild(crearElemento("p", "sim-placeholder-text", "Ejército vacío. Añade tropas arriba."));
 totalsEl.textContent = "VIDA TOTAL: 0 | ATAQUE TOTAL: 0 | FC: 0";
 return;
 }
@@ -16305,12 +16327,18 @@ return { hp, dps: Math.round(dps * (total > 0 ? 1 + ((rangoProm / total) * 0.03)
 const p1 = calc(ejercito1), p2 = calc(ejercito2);
 const t1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
 const t2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
-resBox.innerHTML
-= t1 < t2
-? '🏆 VICTORIA EJÉRCITO AZULAniquila al enemigo en ' + t1 + ' oleadas de ataque.'
-: t2 < t1
-? '🏆 VICTORIA EJÉRCITO ROJOAniquila al aliado en ' + t2 + ' oleadas de ataque.'
-: '⚔ DESTRUCCIÓN MUTUAAmbos ejércitos caen en ' + t1 + ' oleadas.';
+res
+Box.innerHTML = "";
+if (t1 < t2) {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO AZUL"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al enemigo en " + t1 + " oleadas de ataque."));
+} else if (t2 < t1) {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO ROJO"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al aliado en " + t2 + " oleadas de ataque."));
+} else {
+resBox.appendChild(crearElemento("div", "sim-winner-title", "⚔ DESTRUCCIÓN MUTUA"));
+resBox.appendChild(crearElemento("p", "sim-detail-line", "Ambos ejércitos caen en " + t1 + " oleadas."));
+}
 });
 // Copiar código del Bookmarklet
 const btnCopyBookmarklet = document.getElementById("btn-copy-bookmarklet");
@@ -16331,7 +16359,7 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
 });
 }
 // =========================================
-// ESCÁNER DE SILUETAS POR CAPTURA (ULTRARRÁPIDO EN PARALELO)
+// ESCÁNER DE SILUETAS POR CAPTURA (CALIBRADO PARA FUSIÓN ATÓMICA)
 // =========================================
 const silFileInput = document.getElementById("sil-file-input");
 const btnSelectSil = document.getElementById("btn-select-sil");
@@ -16350,10 +16378,11 @@ tmpCanvas.width = w;
 tmpCanvas.height = h;
 const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
 ctx.drawImage(imgElement, 0, 0, w, h);
-const sx = esCapturaJuego ? Math.floor(w * 0.25) : 0;
-const sy = esCapturaJuego ? Math.floor(h * 0.24) : 0;
-const sw = esCapturaJuego ? Math.floor(w * 0.50) : w;
-const sh = esCapturaJuego ? Math.floor(h * 0.44) : h;
+// Recortar exclusivamente el núcleo de la cámara de fusión (evitando tubos y luces superiores/inferiores)
+const sx = esCapturaJuego ? Math.floor(w * 0.34) : 0;
+const sy = esCapturaJuego ? Math.floor(h * 0.36) : 0;
+const sw = esCapturaJuego ? Math.floor(w * 0.32) : w;
+const sh = esCapturaJuego ? Math.floor(h * 0.32) : h;
 let imgData;
 try {
 imgData = ctx.getImageData(sx, sy, sw, sh).data;
@@ -16371,10 +16400,11 @@ const idx = (y * sw + x) * 4;
 const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
 let esSilueta = false;
 if (esCapturaJuego) {
-esSilueta = (r > 235 && g > 235 && b > 235);
+esSilueta = (r > 240 && g > 245 && b > 245);
 } else {
-const distFondo = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-esSilueta = (a > 128 && distFondo > 45);
+const esCespedVerde = (g > r + 15 && g > b + 15 && g > 70);
+const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+esSilueta = (a > 128 && !esCespedVerde && distEsquina > 40);
 }
 if (esSilueta) {
 mask[y * sw + x] = 1;
@@ -16386,7 +16416,7 @@ activos++;
 }
 }
 }
-if (activos < 20 || maxX <= minX || maxY <= minY) return null;
+if (activos < 25 || maxX <= minX || maxY <= minY) return null;
 const SIZE = 32;
 const grid = new Uint8Array(SIZE * SIZE);
 const boxW = maxX - minX + 1;
@@ -16403,7 +16433,7 @@ return { grid, ratio: boxW / boxH };
 function calcularSimilitud(firmaA, firmaB) {
 if (!firmaA || !firmaB) return 0;
 const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
-if (diffRatio > 0.65) return 0;
+if (diffRatio > 0.55) return 0;
 let interseccion = 0, union = 0;
 for (let i = 0; i < firmaA.grid.length; i++) {
 const a = firmaA.grid.at(i), b = firmaB.grid.at(i);
@@ -16411,7 +16441,7 @@ if (a || b) union++;
 if (a && b) interseccion++;
 }
 if (union === 0) return 0;
-return Math.max(0, Math.round(((interseccion / union) - diffRatio * 0.15) * 100));
+return Math.max(0, Math.round(((interseccion / union) - diffRatio * 0.2) * 100));
 }
 function obtenerFirmaUnidadAsync(u) {
 if (cacheFirmasCatalogo[u.id] !== undefined) {
@@ -16442,12 +16472,14 @@ async function procesarCapturaSilueta(imgUsuario) {
 if (!silMatchesGrid) return;
 ultimaImagenEscaneada = imgUsuario;
 if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
-silMatchesGrid.innerHTML = 'Analizando silueta en paralelo...';
+silMatchesGrid.innerHTML = "";
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Analizando silueta en paralelo..."));
 let firmaObjetivo = extraerFirmaSilueta(imgUsuario, true);
 if (!firmaObjetivo) firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
 if (!firmaObjetivo) {
 if (silStatusBadge) silStatusBadge.textContent = "SILUETA NO DETECTADA";
-silMatchesGrid.innerHTML = 'No se detectó una silueta blanca clara. Intenta recortar más cerca de la cápsula de fusión.';
+silMatchesGrid.innerHTML = "";
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "No se detectó una silueta blanca clara. Intenta recortar más cerca de la cápsula."));
 return;
 }
 const catFiltro = silCatFilter ? silCatFilter.value.toUpperCase() : "TODOS";
@@ -16472,16 +16504,20 @@ const top5 = resultados.slice(0, 5);
 if (silStatusBadge) silStatusBadge.textContent = "ESCANEO COMPLETADO";
 silMatchesGrid.innerHTML = "";
 if (top5.length === 0) {
-silMatchesGrid.innerHTML = 'No se encontraron coincidencias claras. Prueba recortar la imagen solo alrededor de la silueta.';
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "No se encontraron coincidencias claras. Prueba recortar solo alrededor de la silueta."));
 return;
 }
 top5.forEach((item, idx) => {
 const u = item.unidad;
 const card = crearElemento("div", "match-card" + (idx === 0 ? " top-match" : ""));
-card.innerHTML =
-'' + (idx === 0 ? "★ MEJOR: " : "") + item.score + '% SIMILITUD' +
-'' +
-'#' + u.id + ' ' + u.nombre + '';
+card.appendChild(crearElemento("span", "match-score", (idx === 0 ? "★ MEJOR: " : "") + item.score + "% SIMILITUD"));
+if (u.imagen_ruta) {
+const img = document.createElement("img");
+img.src = u.imagen_ruta;
+img.alt = u.nombre;
+card.appendChild(img);
+}
+card.appendChild(crearElemento("h4", "", "#" + u.id + " " + u.nombre));
 silMatchesGrid.appendChild(card);
 });
 }

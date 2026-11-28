@@ -16387,20 +16387,21 @@ const cacheFirmasCatalogo = {};
             return null;
         }
 
-        // Detectar si es captura completa de pantalla de Fusión Atómica (panorámica oscura con bordes de UI)
+        // Detectar si es captura de pantalla de Fusión Atómica
         const p0 = (imgFull.at(0) + imgFull.at(1) + imgFull.at(2)) / 3;
         const pDer = (imgFull.at((w - 1) * 4) + imgFull.at((w - 1) * 4 + 1) + imgFull.at((w - 1) * 4 + 2)) / 3;
-        const esPantallaFusion = !modoCatalogo && (w / h > 1.25) && (p0 < 120 && pDer < 120);
+        const esPantallaFusion = !modoCatalogo && (w / h > 1.15) && (p0 < 150 || pDer < 150);
 
-        const sx = esPantallaFusion ? Math.floor(w * 0.35) : 0;
-        const sy = esPantallaFusion ? Math.floor(h * 0.37) : 0;
-        const sw = esPantallaFusion ? Math.floor(w * 0.30) : w;
-        const sh = esPantallaFusion ? Math.floor(h * 0.32) : h;
+        // En pantalla de fusión, recortar estrictamente el centro entre los dos cañones (evitando los tubos blancos de abajo-izquierda)
+        // En el catálogo, recortar un 6% de margen para eliminar el borde oscuro de la tarjeta
+        const sx = esPantallaFusion ? Math.floor(w * 0.36) : (modoCatalogo ? Math.floor(w * 0.06) : 0);
+        const sy = esPantallaFusion ? Math.floor(h * 0.35) : (modoCatalogo ? Math.floor(h * 0.06) : 0);
+        const sw = esPantallaFusion ? Math.floor(w * 0.28) : (modoCatalogo ? Math.floor(w * 0.88) : w);
+        const sh = esPantallaFusion ? Math.floor(h * 0.28) : (modoCatalogo ? Math.floor(h * 0.88) : h);
 
         const imgData = ctx.getImageData(sx, sy, sw, sh).data;
         const mask = new Uint8Array(sw * sh);
 
-        // Detectar color de fondo de la esquina superior izquierda del recorte
         const bgR = imgData.at(0), bgG = imgData.at(1), bgB = imgData.at(2), bgA = imgData.at(3);
         const fondoEsBlanco = !modoCatalogo && !esPantallaFusion && (bgA > 200 && bgR > 230 && bgG > 230 && bgB > 230);
 
@@ -16413,14 +16414,14 @@ const cacheFirmasCatalogo = {};
                 let esSilueta = false;
 
                 if (esPantallaFusion) {
-                    // Silueta blanca brillante dentro de la cámara oscura de fusión
-                    esSilueta = (r > 240 && g > 240 && b > 240 && Math.abs(r - g) < 16 && Math.abs(r - b) < 16);
+                    // Blanco puro de la silueta dentro de la cápsula
+                    esSilueta = (r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 18 && Math.abs(r - b) < 18);
                 } else if (fondoEsBlanco) {
-                    // Imagen recortada con fondo blanco (como el Spartan Mech subido)
+                    // Imagen recortada con fondo blanco
                     esSilueta = (a > 128 && (r < 235 || g < 235 || b < 235));
                 } else {
-                    // Sprite del catálogo (fondo verde pasto o transparente)
-                    const esCespedVerde = (g > r + 12 && g > b + 12 && g > 65);
+                    // Sprite del catálogo: excluir transparencia, césped verde y el marco gris/negro del borde
+                    const esCespedVerde = (g > r + 10 && g > b + 10 && g > 60);
                     const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
                     esSilueta = (a > 128 && !esCespedVerde && distEsquina > 35);
                 }
@@ -16436,7 +16437,7 @@ const cacheFirmasCatalogo = {};
             }
         }
 
-        if (activos < 25 || maxX <= minX || maxY <= minY) return null;
+        if (activos < 20 || maxX <= minX || maxY <= minY) return null;
 
         const SIZE = 32;
         const grid = new Uint8Array(SIZE * SIZE);
@@ -16467,7 +16468,7 @@ const cacheFirmasCatalogo = {};
         if (!firmaA || !firmaB) return 0;
         const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
         const diffDensidad = Math.abs(firmaA.densidad - firmaB.densidad);
-        if (diffRatio > 0.45 || diffDensidad > 0.30) return 0;
+        if (diffRatio > 0.85 || diffDensidad > 0.45) return 0;
 
         let interNormal = 0, unionNormal = 0;
         let interEspejo = 0, unionEspejo = 0;
@@ -16485,10 +16486,11 @@ const cacheFirmasCatalogo = {};
         }
 
         const iouNormal = unionNormal > 0 ? (interNormal / unionNormal) : 0;
-        const iouEspejo = unionEspejo > 0 ? (interEspejo / unionEspejo) : 0;
+        // Dar ligera ventaja (+5%) a la orientación espejo, ya que la Fusión Atómica siempre invierte la unidad
+        const iouEspejo = unionEspejo > 0 ? ((interEspejo / unionEspejo) * 1.05) : 0;
         const mejorIou = Math.max(iouNormal, iouEspejo);
 
-        const penalizacion = (diffRatio * 0.25) + (diffDensidad * 0.35);
+        const penalizacion = (diffRatio * 0.15) + (diffDensidad * 0.20);
         return Math.max(0, Math.round((mejorIou - penalizacion) * 100));
     }
 

@@ -1623,6 +1623,23 @@ grid-template-columns: 1fr;
     object-fit: contain;
 }
 
+#sil-crop-canvas {
+    max-width: 100%;
+    max-height: 240px;
+    border: 2px solid var(--accent-yellow);
+    cursor: crosshair;
+    touch-action: none;
+    background-color: #080b0f;
+}
+
+.crop-hint {
+    font-size: 0.78rem;
+    color: var(--accent-cyan);
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+
 .scanner-icon {
     font-size: 2.4rem;
     margin-bottom: 6px;
@@ -1730,26 +1747,34 @@ grid-template-columns: 1fr;
         </div>
     </header>
 
-    <!-- SECCIÓN ESCÁNER DE SILUETAS POR CAPTURA (FUSIÓN ATÓMICA) -->
+    <!-- SECCIÓN ESCÁNER VISUAL INTERACTIVO (RECORTE + SILUETA + COLOR) -->
     <section class="silhouette-section" id="siluetas">
         <div class="squad-container">
             <div class="section-header">
-                <h2>ESCÁNER DE SILUETAS (FUSIÓN ATÓMICA)</h2>
+                <h2>ESCÁNER VISUAL DE UNIDADES (FUSIÓN, MAPA, ALMACÉN)</h2>
                 <span class="counter-badge" id="sil-status-badge">LISTO PARA ESCANEAR</span>
             </div>
-            <p class="section-desc">Sube o pega (<strong>Ctrl + V</strong>) una captura de la cámara de <strong>Fusión Atómica</strong>. El sistema extraerá la silueta blanca del centro y buscará las unidades más parecidas en el catálogo.</p>
+            <p class="section-desc">Sube o pega (<strong>Ctrl + V</strong>) una captura. <strong>Arrastra el mouse o dedo sobre la unidad</strong> para recortarla y mejorar la precisión al instante.</p>
 
             <div class="scanner-grid">
-                <!-- ZONA DE CARGA DE CAPTURA -->
+                <!-- ZONA DE CARGA Y RECORTE INTERACTIVO -->
                 <div class="scanner-upload-box" id="sil-dropzone">
                     <input type="file" id="sil-file-input" accept="image/*" style="display: none;">
+                    
                     <div id="sil-preview-area">
                         <p class="scanner-icon">📸</p>
                         <p><strong>HAZ CLIC PARA SUBIR CAPTURA</strong><br>o pega la imagen aquí con <strong>Ctrl + V</strong></p>
                     </div>
-                    <div class="scanner-controls">
+
+                    <div id="sil-crop-wrapper" style="display: none; width: 100%; text-align: center;">
+                        <canvas id="sil-crop-canvas" title="Arrastra sobre la unidad para recortarla"></canvas>
+                        <p class="crop-hint">✂ Arrastra un cuadro sobre la unidad para recortar</p>
+                    </div>
+
+                    <div class="scanner-controls" style="flex-wrap: wrap;">
                         <button type="button" class="btn-tactical" id="btn-select-sil">SUBIR CAPTURA</button>
-                        <select id="sil-cat-filter" class="sim-level-select" style="max-width: 190px;" title="Filtrar tipo">
+                        <button type="button" class="btn-backup" id="btn-reset-crop" style="display: none;">↺ RESTAURAR</button>
+                        <select id="sil-cat-filter" class="sim-level-select" style="flex: 1; min-width: 140px;" title="Categoría">
                             <option value="TODOS">TODAS LAS TROPAS</option>
                             <option value="MECHA">MECHA</option>
                             <option value="VEHICULO">VEHÍCULO</option>
@@ -1759,6 +1784,15 @@ grid-template-columns: 1fr;
                             <option value="MARINA">MARINA</option>
                             <option value="ANIMALES">ANIMALES</option>
                         </select>
+                        <select id="sil-color-filter" class="sim-level-select" style="flex: 1; min-width: 140px;" title="Color principal">
+                            <option value="AUTO">COLOR: AUTOMÁTICO</option>
+                            <option value="SILUETA">MODO SILUETA (BLANCO)</option>
+                            <option value="ROJO">COLOR: ROJO / NARANJA</option>
+                            <option value="AZUL">COLOR: AZUL / CIAN</option>
+                            <option value="AMARILLO">COLOR: DORADO / AMARILLO</option>
+                            <option value="VERDE">COLOR: VERDE</option>
+                            <option value="OSCURO">COLOR: NEGRO / GRIS</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1766,7 +1800,7 @@ grid-template-columns: 1fr;
                 <div class="scanner-results-box">
                     <div class="fighter-badge" style="color: var(--accent-cyan); margin-bottom: 10px;">TOP 5 COINCIDENCIAS DETECTADAS</div>
                     <div class="scanner-matches-grid" id="sil-matches-grid">
-                        <p class="sim-placeholder-text">Sube una captura de la Fusión Atómica para analizar la silueta automáticamente.</p>
+                        <p class="sim-placeholder-text">Sube una captura del juego (Fusión Atómica, Mapa, Almacén o Publicidad) para analizarla.</p>
                     </div>
                 </div>
             </div>
@@ -16327,8 +16361,7 @@ return { hp, dps: Math.round(dps * (total > 0 ? 1 + ((rangoProm / total) * 0.03)
 const p1 = calc(ejercito1), p2 = calc(ejercito2);
 const t1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
 const t2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
-res
-Box.innerHTML = "";
+resBox.innerHTML = "";
 if (t1 < t2) {
 resBox.appendChild(crearElemento("div", "sim-winner-title", "🏆 VICTORIA EJÉRCITO AZUL"));
 resBox.appendChild(crearElemento("p", "sim-detail-line", "Aniquila al enemigo en " + t1 + " oleadas de ataque."));
@@ -16358,86 +16391,106 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
 }
 });
 }
-// =========================================
-// ESCÁNER DE SILUETAS POR CAPTURA (CALIBRADO PARA FUSIÓN ATÓMICA)
-// =========================================
-const silFileInput = document.getElementById("sil-file-input");
-const btnSelectSil = document.getElementById("btn-select-sil");
-const silPreviewArea = document.getElementById("sil-preview-area");
-const silMatchesGrid = document.getElementById("sil-matches-grid");
-const silStatusBadge = document.getElementById("sil-status-badge");
-const silCatFilter = document.getElementById("sil-cat-filter");
-let ultimaImagenEscaneada = null;
-const cacheFirmasCatalogo = {};
-    function extraerFirmaSilueta(imgElement, modoCatalogo) {
-        const w = imgElement.naturalWidth || imgElement.width;
-        const h = imgElement.naturalHeight || imgElement.height;
+    // =========================================
+    // ESCÁNER VISUAL INTERACTIVO (RECORTE + SILUETA + HISTOGRAMA DE COLOR)
+    // =========================================
+    const silFileInput = document.getElementById("sil-file-input");
+    const btnSelectSil = document.getElementById("btn-select-sil");
+    const btnResetCrop = document.getElementById("btn-reset-crop");
+    const silPreviewArea = document.getElementById("sil-preview-area");
+    const silCropWrapper = document.getElementById("sil-crop-wrapper");
+    const silCropCanvas = document.getElementById("sil-crop-canvas");
+    const silMatchesGrid = document.getElementById("sil-matches-grid");
+    const silStatusBadge = document.getElementById("sil-status-badge");
+    const silCatFilter = document.getElementById("sil-cat-filter");
+    const silColorFilter = document.getElementById("sil-color-filter");
+
+    let imagenOriginalCargada = null;
+    let recorteActual = null; // { x, y, w, h } en coordenadas reales de imagenOriginalCargada
+    let arrastrando = false;
+    let inicioArrastre = { x: 0, y: 0 };
+    let rectTemporal = null;
+    const cacheFirmasCatalogo = {};
+
+    function clasificarColorPixel(r, g, b) {
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const sat = max - min;
+        if (max < 75) return "OSCURO";
+        if (sat < 35) return max > 200 ? "BLANCO" : "OSCURO";
+        if (r >= g && r >= b) {
+            return (g > b + 35 && g > r * 0.55) ? "AMARILLO" : "ROJO";
+        }
+        if (g >= r && g >= b) return "VERDE";
+        return "AZUL";
+    }
+
+    function extraerFirmaVisual(sourceCanvas, esCatalogo, modoForzado) {
+        const w = sourceCanvas.width;
+        const h = sourceCanvas.height;
         if (!w || !h) return null;
 
-        const tmpCanvas = document.createElement("canvas");
-        tmpCanvas.width = w;
-        tmpCanvas.height = h;
-        const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
-        ctx.drawImage(imgElement, 0, 0, w, h);
-
-        let imgFull;
+        const ctx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+        let imgData;
         try {
-            imgFull = ctx.getImageData(0, 0, w, h).data;
+            imgData = ctx.getImageData(0, 0, w, h).data;
         } catch (e) {
             return null;
         }
 
-        // Detectar si es captura de pantalla de Fusión Atómica
-        const p0 = (imgFull.at(0) + imgFull.at(1) + imgFull.at(2)) / 3;
-        const pDer = (imgFull.at((w - 1) * 4) + imgFull.at((w - 1) * 4 + 1) + imgFull.at((w - 1) * 4 + 2)) / 3;
-        const esPantallaFusion = !modoCatalogo && (w / h > 1.15) && (p0 < 150 || pDer < 150);
-
-        // En pantalla de fusión, recortar estrictamente el centro entre los dos cañones (evitando los tubos blancos de abajo-izquierda)
-        // En el catálogo, recortar un 6% de margen para eliminar el borde oscuro de la tarjeta
-        const sx = esPantallaFusion ? Math.floor(w * 0.36) : (modoCatalogo ? Math.floor(w * 0.06) : 0);
-        const sy = esPantallaFusion ? Math.floor(h * 0.35) : (modoCatalogo ? Math.floor(h * 0.06) : 0);
-        const sw = esPantallaFusion ? Math.floor(w * 0.28) : (modoCatalogo ? Math.floor(w * 0.88) : w);
-        const sh = esPantallaFusion ? Math.floor(h * 0.28) : (modoCatalogo ? Math.floor(h * 0.88) : h);
-
-        const imgData = ctx.getImageData(sx, sy, sw, sh).data;
-        const mask = new Uint8Array(sw * sh);
-
         const bgR = imgData.at(0), bgG = imgData.at(1), bgB = imgData.at(2), bgA = imgData.at(3);
-        const fondoEsBlanco = !modoCatalogo && !esPantallaFusion && (bgA > 200 && bgR > 230 && bgG > 230 && bgB > 230);
+        const fondoEsBlanco = !esCatalogo && (bgA > 200 && bgR > 225 && bgG > 225 && bgB > 225);
 
-        let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
+        // Detectar si el recorte del usuario es una silueta blanca sobre fondo oscuro (Fusión Atómica)
+        let blancosPuros = 0;
+        const totalPx = w * h;
+        for (let i = 0; i < imgData.length; i += 4) {
+            const r = imgData.at(i), g = imgData.at(i + 1), b = imgData.at(i + 2);
+            if (r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 18 && Math.abs(r - b) < 18) {
+                blancosPuros++;
+            }
+        }
 
-        for (let y = 0; y < sh; y++) {
-            for (let x = 0; x < sw; x++) {
-                const idx = (y * sw + x) * 4;
+        const esSiluetaFusion = !esCatalogo && !fondoEsBlanco &&
+            (modoForzado === "SILUETA" || (modoForzado === "AUTO" && (blancosPuros / totalPx) > 0.04 && (blancosPuros / totalPx) < 0.70));
+
+        const mask = new Uint8Array(totalPx);
+        const histColor = { ROJO: 0, AZUL: 0, AMARILLO: 0, VERDE: 0, OSCURO: 0, BLANCO: 0 };
+        let minX = w, minY = h, maxX = 0, maxY = 0, activos = 0;
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const idx = (y * w + x) * 4;
                 const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
-                let esSilueta = false;
+                let esObjeto = false;
 
-                if (esPantallaFusion) {
-                    // Blanco puro de la silueta dentro de la cápsula
-                    esSilueta = (r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 18 && Math.abs(r - b) < 18);
+                if (esSiluetaFusion) {
+                    esObjeto = (r > 238 && g > 238 && b > 238 && Math.abs(r - g) < 18 && Math.abs(r - b) < 18);
                 } else if (fondoEsBlanco) {
-                    // Imagen recortada con fondo blanco
-                    esSilueta = (a > 128 && (r < 235 || g < 235 || b < 235));
+                    const esTextoVerde = (g > r + 25 && g > b + 25 && y > h * 0.72);
+                    esObjeto = (a > 128 && !esTextoVerde && (r < 230 || g < 230 || b < 230));
                 } else {
-                    // Sprite del catálogo: excluir transparencia, césped verde y el marco gris/negro del borde
                     const esCespedVerde = (g > r + 10 && g > b + 10 && g > 60);
                     const distEsquina = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-                    esSilueta = (a > 128 && !esCespedVerde && distEsquina > 35);
+                    esObjeto = (a > 128 && !esCespedVerde && distEsquina > 35);
                 }
 
-                if (esSilueta) {
-                    mask[y * sw + x] = 1;
+                if (esObjeto) {
+                    mask[y * w + x] = 1;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
                     if (y < minY) minY = y;
                     if (y > maxY) maxY = y;
                     activos++;
+                    if (!esSiluetaFusion) {
+                        const tono = clasificarColorPixel(r, g, b);
+                        histColor[tono]++;
+                    }
                 }
             }
         }
 
-        if (activos < 20 || maxX <= minX || maxY <= minY) return null;
+        if (activos < 15 || maxX <= minX || maxY <= minY) return null;
 
         const SIZE = 32;
         const grid = new Uint8Array(SIZE * SIZE);
@@ -16450,48 +16503,59 @@ const cacheFirmasCatalogo = {};
             const origY = minY + Math.floor((gy / SIZE) * boxH);
             for (let gx = 0; gx < SIZE; gx++) {
                 const origX = minX + Math.floor((gx / SIZE) * boxW);
-                const val = mask[origY * sw + origX];
+                const val = mask[origY * w + origX];
                 grid[gy * SIZE + gx] = val;
                 gridEspejo[gy * SIZE + (SIZE - 1 - gx)] = val;
                 if (val) rellenos++;
             }
         }
+
+        // Normalizar histograma de color (porcentaje de cada tono en la unidad)
+        const paleta = {};
+        Object.keys(histColor).forEach(k => { paleta[k] = histColor[k] / activos; });
+
         return {
             grid,
             gridEspejo,
             ratio: boxW / boxH,
-            densidad: rellenos / (SIZE * SIZE)
+            densidad: rellenos / (SIZE * SIZE),
+            esSilueta: esSiluetaFusion,
+            paleta
         };
     }
 
-    function calcularSimilitud(firmaA, firmaB) {
-        if (!firmaA || !firmaB) return 0;
-        const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
-        const diffDensidad = Math.abs(firmaA.densidad - firmaB.densidad);
-        if (diffRatio > 0.85 || diffDensidad > 0.45) return 0;
+    function calcularSimilitud(firmaUser, firmaCat) {
+        if (!firmaUser || !firmaCat) return 0;
+        const diffRatio = Math.abs(firmaUser.ratio - firmaCat.ratio);
+        const diffDensidad = Math.abs(firmaUser.densidad - firmaCat.densidad);
+        if (diffRatio > 0.95 || diffDensidad > 0.55) return 0;
 
-        let interNormal = 0, unionNormal = 0;
-        let interEspejo = 0, unionEspejo = 0;
-
-        for (let i = 0; i < firmaA.grid.length; i++) {
-            const a = firmaA.grid.at(i);
-            const b1 = firmaB.grid.at(i);
-            const b2 = firmaB.gridEspejo.at(i);
-
+        let interNormal = 0, unionNormal = 0, interEspejo = 0, unionEspejo = 0;
+        for (let i = 0; i < firmaUser.grid.length; i++) {
+            const a = firmaUser.grid.at(i), b1 = firmaCat.grid.at(i), b2 = firmaCat.gridEspejo.at(i);
             if (a || b1) unionNormal++;
             if (a && b1) interNormal++;
-
             if (a || b2) unionEspejo++;
             if (a && b2) interEspejo++;
         }
 
         const iouNormal = unionNormal > 0 ? (interNormal / unionNormal) : 0;
-        // Dar ligera ventaja (+5%) a la orientación espejo, ya que la Fusión Atómica siempre invierte la unidad
         const iouEspejo = unionEspejo > 0 ? ((interEspejo / unionEspejo) * 1.05) : 0;
-        const mejorIou = Math.max(iouNormal, iouEspejo);
+        const scoreForma = Math.max(0, Math.max(iouNormal, iouEspejo) - (diffRatio * 0.14) - (diffDensidad * 0.18));
 
-        const penalizacion = (diffRatio * 0.15) + (diffDensidad * 0.20);
-        return Math.max(0, Math.round((mejorIou - penalizacion) * 100));
+        // Si es silueta pura (Fusión Atómica), evaluar solo forma
+        if (firmaUser.esSilueta) {
+            return Math.round(scoreForma * 100);
+        }
+
+        // Si es imagen a color (Mapa, Almacén, Publicidad), combinar 55% Forma + 45% Similitud de Color
+        let similitudColor = 0;
+        Array.of("ROJO", "AZUL", "AMARILLO", "VERDE", "OSCURO").forEach(tono => {
+            similitudColor += Math.min(firmaUser.paleta[tono] || 0, firmaCat.paleta[tono] || 0);
+        });
+
+        const scoreTotal = (scoreForma * 0.55) + (similitudColor * 0.45);
+        return Math.max(0, Math.round(scoreTotal * 100));
     }
 
     function obtenerFirmaUnidadAsync(u) {
@@ -16501,38 +16565,84 @@ const cacheFirmasCatalogo = {};
         return new Promise(resolve => {
             const imgCat = new Image();
             imgCat.crossOrigin = "anonymous";
-            const timer = setTimeout(() => {
-                cacheFirmasCatalogo[u.id] = null;
-                resolve(null);
-            }, 3000);
+            const timer = setTimeout(() => { cacheFirmasCatalogo[u.id] = null; resolve(null); }, 3000);
 
             imgCat.onload = () => {
                 clearTimeout(timer);
-                const firma = extraerFirmaSilueta(imgCat, true);
+                const c = document.createElement("canvas");
+                const mw = Math.floor(imgCat.width * 0.86);
+                const mh = Math.floor(imgCat.height * 0.86);
+                c.width = mw;
+                c.height = mh;
+                c.getContext("2d").drawImage(imgCat, Math.floor(imgCat.width * 0.07), Math.floor(imgCat.height * 0.07), mw, mh, 0, 0, mw, mh);
+                const firma = extraerFirmaVisual(c, true, "AUTO");
                 cacheFirmasCatalogo[u.id] = firma;
                 resolve(firma);
             };
-            imgCat.onerror = () => {
-                clearTimeout(timer);
-                cacheFirmasCatalogo[u.id] = null;
-                resolve(null);
-            };
+            imgCat.onerror = () => { clearTimeout(timer); cacheFirmasCatalogo[u.id] = null; resolve(null); };
             imgCat.src = u.imagen_ruta;
         });
     }
 
-    async function procesarCapturaSilueta(imgUsuario) {
-        if (!silMatchesGrid) return;
-        ultimaImagenEscaneada = imgUsuario;
-        if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
-        silMatchesGrid.innerHTML = "";
-        silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Analizando silueta en paralelo..."));
+    function dibujarCanvasRecorte() {
+        if (!silCropCanvas || !imagenOriginalCargada) return;
+        const ctx = silCropCanvas.getContext("2d");
+        ctx.clearRect(0, 0, silCropCanvas.width, silCropCanvas.height);
+        ctx.drawImage(imagenOriginalCargada, 0, 0, silCropCanvas.width, silCropCanvas.height);
 
-        const firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
-if (!firmaObjetivo) {
-if (silStatusBadge) silStatusBadge.textContent = "SILUETA NO DETECTADA";
+        const rect = rectTemporal || (recorteActual ? {
+            x: (recorteActual.x / imagenOriginalCargada.naturalWidth) * silCropCanvas.width,
+            y: (recorteActual.y / imagenOriginalCargada.naturalHeight) * silCropCanvas.height,
+            w: (recorteActual.w / imagenOriginalCargada.naturalWidth) * silCropCanvas.width,
+            h: (recorteActual.h / imagenOriginalCargada.naturalHeight) * silCropCanvas.height
+        } : null);
+
+        if (rect && rect.w > 4 && rect.h > 4) {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+            ctx.fillRect(0, 0, silCropCanvas.width, silCropCanvas.height);
+            ctx.drawImage(
+                imagenOriginalCargada,
+                (rect.x / silCropCanvas.width) * imagenOriginalCargada.naturalWidth,
+                (rect.y / silCropCanvas.height) * imagenOriginalCargada.naturalHeight,
+                (rect.w / silCropCanvas.width) * imagenOriginalCargada.naturalWidth,
+                (rect.h / silCropCanvas.height) * imagenOriginalCargada.naturalHeight,
+                rect.x, rect.y, rect.w, rect.h
+            );
+            ctx.strokeStyle = "#00f5d4";
+ctx.lineWidth = 2;
+ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+}
+}
+async function ejecutarAnalisisVisual() {
+if (!imagenOriginalCargada || !silMatchesGrid) return;
+if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO...";
 silMatchesGrid.innerHTML = "";
-silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "No se detectó una silueta blanca clara. Intenta recortar más cerca de la cápsula."));
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Comparando forma y paleta de colores..."));
+const iw = imagenOriginalCargada.naturalWidth;
+const ih = imagenOriginalCargada.naturalHeight;
+let sx = 0, sy = 0, sw = iw, sh = ih;
+if (recorteActual && recorteActual.w > 10 && recorteActual.h > 10) {
+sx = recorteActual.x;
+sy = recorteActual.y;
+sw = recorteActual.w;
+sh = recorteActual.h;
+} else if (iw / ih > 1.25) {
+// Si el usuario aún no recortó y es pantalla ancha (Fusión Atómica), enfocar centro
+sx = Math.floor(iw * 0.32);
+sy = Math.floor(ih * 0.34);
+sw = Math.floor(iw * 0.36);
+sh = Math.floor(ih * 0.28);
+}
+const cropCanvas = document.createElement("canvas");
+cropCanvas.width = sw;
+cropCanvas.height = sh;
+cropCanvas.getContext("2d").drawImage(imagenOriginalCargada, sx, sy, sw, sh, 0, 0, sw, sh);
+const modoColor = silColorFilter ? silColorFilter.value : "AUTO";
+const firmaUser = extraerFirmaVisual(cropCanvas, false, modoColor);
+if (!firmaUser) {
+if (silStatusBadge) silStatusBadge.textContent = "RECORTE NO DETECTADO";
+silMatchesGrid.innerHTML = "";
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Arrastra un cuadro sobre la unidad en la imagen de la izquierda para analizarla."));
 return;
 }
 const catFiltro = silCatFilter ? silCatFilter.value.toUpperCase() : "TODOS";
@@ -16548,8 +16658,14 @@ for (let i = 0; i < candidatas.length; i += LOTE) {
 const grupo = candidatas.slice(i, i + LOTE);
 const firmas = await Promise.all(grupo.map(u => obtenerFirmaUnidadAsync(u)));
 firmas.forEach((firmaCat, idx) => {
-const score = calcularSimilitud(firmaObjetivo, firmaCat);
-if (score > 15) resultados.push({ unidad: grupo.at(idx), score });
+const u = grupo.at(idx);
+let score = calcularSimilitud(firmaUser, firmaCat);
+// Bono extra si el usuario eligió un filtro de color dominante específico
+if (firmaCat && !Array.of("AUTO", "SILUETA").includes(modoColor)) {
+const pctTono = firmaCat.paleta[modoColor] || 0;
+if (pctTono > 0.25) score += 12;
+}
+if (score > 12) resultados.push({ unidad: u, score: Math.min(99, score) });
 });
 }
 resultados.sort((a, b) => b.score - a.score);
@@ -16557,7 +16673,7 @@ const top5 = resultados.slice(0, 5);
 if (silStatusBadge) silStatusBadge.textContent = "ESCANEO COMPLETADO";
 silMatchesGrid.innerHTML = "";
 if (top5.length === 0) {
-silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "No se encontraron coincidencias claras. Prueba recortar solo alrededor de la silueta."));
+silMatchesGrid.appendChild(crearElemento("p", "sim-placeholder-text", "Sin coincidencias claras. Intenta recortar más ajustado a la unidad."));
 return;
 }
 top5.forEach((item, idx) => {
@@ -16580,20 +16696,85 @@ const reader = new FileReader();
 reader.onload = (ev) => {
 const img = new Image();
 img.onload = () => {
-if (silPreviewArea) {
-silPreviewArea.innerHTML = "";
-silPreviewArea.appendChild(img);
-}
-procesarCapturaSilueta(img);
+imagenOriginalCargada = img;
+recorteActual = null;
+rectTemporal = null;
+if (silPreviewArea) silPreviewArea.style.display = "none";
+if (silCropWrapper) silCropWrapper.style.display = "block";
+if (btnResetCrop) btnResetCrop.style.display = "inline-block";
+const maxW = 340;
+const scale = Math.min(1, maxW / img.naturalWidth);
+silCropCanvas.width = Math.round(img.naturalWidth * scale);
+silCropCanvas.height = Math.round(img.naturalHeight * scale);
+dibujarCanvasRecorte();
+ejecutarAnalisisVisual();
 };
 img.src = ev.target.result;
 };
 reader.readAsDataURL(file);
 }
+// Eventos de arrastre en el canvas (Mouse y Touch)
+function obtenerPosCanvas(e) {
+const rect = silCropCanvas.getBoundingClientRect();
+const clientX = e.touches ? e.touches.at(0).clientX : e.clientX;
+const clientY = e.touches ? e.touches.at(0).clientY : e.clientY;
+return {
+x: Math.max(0, Math.min(silCropCanvas.width, (clientX - rect.left) * (silCropCanvas.width / rect.width))),
+y: Math.max(0, Math.min(silCropCanvas.height, (clientY - rect.top) * (silCropCanvas.height / rect.height)))
+};
+}
+if (silCropCanvas) {
+const iniciar = (e) => {
+e.preventDefault();
+arrastrando = true;
+inicioArrastre = obtenerPosCanvas(e);
+rectTemporal = { x: inicioArrastre.x, y: inicioArrastre.y, w: 0, h: 0 };
+};
+const mover = (e) => {
+if (!arrastrando) return;
+e.preventDefault();
+const pos = obtenerPosCanvas(e);
+rectTemporal = {
+x: Math.min(inicioArrastre.x, pos.x),
+y: Math.min(inicioArrastre.y, pos.y),
+w: Math.abs(pos.x - inicioArrastre.x),
+h: Math.abs(pos.y - inicioArrastre.y)
+};
+dibujarCanvasRecorte();
+};
+const soltar = () => {
+if (!arrastrando) return;
+arrastrando = false;
+if (rectTemporal && rectTemporal.w > 12 && rectTemporal.h > 12 && imagenOriginalCargada) {
+recorteActual = {
+x: Math.round((rectTemporal.x / silCropCanvas.width) * imagenOriginalCargada.naturalWidth),
+y: Math.round((rectTemporal.y / silCropCanvas.height) * imagenOriginalCargada.naturalHeight),
+w: Math.round((rectTemporal.w / silCropCanvas.width) * imagenOriginalCargada.naturalWidth),
+h: Math.round((rectTemporal.h / silCropCanvas.height) * imagenOriginalCargada.naturalHeight)
+};
+rectTemporal = null;
+dibujarCanvasRecorte();
+ejecutarAnalisisVisual();
+}
+};
+silCropCanvas.addEventListener("mousedown", iniciar);
+window.addEventListener("mousemove", mover);
+window.addEventListener("mouseup", soltar);
+silCropCanvas.addEventListener("touchstart", iniciar, { passive: false });
+silCropCanvas.addEventListener("touchmove", mover, { passive: false });
+silCropCanvas.addEventListener("touchend", soltar);
+}
+btnResetCrop?.addEventListener("click", () => {
+recorteActual = null;
+rectTemporal = null;
+dibujarCanvasRecorte();
+ejecutarAnalisisVisual();
+});
 btnSelectSil?.addEventListener("click", () => silFileInput?.click());
 silPreviewArea?.addEventListener("click", () => silFileInput?.click());
 silFileInput?.addEventListener("change", (e) => cargarArchivoSilueta(e.target.files?.item(0)));
-silCatFilter?.addEventListener("change", () => { if (ultimaImagenEscaneada) procesarCapturaSilueta(ultimaImagenEscaneada); });
+silCatFilter?.addEventListener("change", () => { if (imagenOriginalCargada) ejecutarAnalisisVisual(); });
+silColorFilter?.addEventListener("change", () => { if (imagenOriginalCargada) ejecutarAnalisisVisual(); });
 document.addEventListener("paste", (e) => {
 const items = e.clipboardData?.items;
 if (!items) return;

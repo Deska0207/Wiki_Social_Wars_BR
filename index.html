@@ -15380,13 +15380,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    const ESCALADO_NIVELES = [
+    const ESCALADO_NIVELES = Array.of(
         { nivel: 1, multVida: 1.0, sumaAtaque: 0 }, { nivel: 2, multVida: 1.2, sumaAtaque: 2 },
         { nivel: 3, multVida: 1.4, sumaAtaque: 4 }, { nivel: 4, multVida: 1.6, sumaAtaque: 7 },
         { nivel: 5, multVida: 1.8, sumaAtaque: 10 }, { nivel: 6, multVida: 2.0, sumaAtaque: 14 },
         { nivel: 7, multVida: 2.25, sumaAtaque: 18 }, { nivel: 8, multVida: 2.5, sumaAtaque: 22 },
         { nivel: 9, multVida: 2.75, sumaAtaque: 26 }, { nivel: 10, multVida: 3.0, sumaAtaque: 30 }
-    ];
+    );
 
     function obtenerStatsPorNivel(unidad, nivel) {
         const esc = ESCALADO_NIVELES.find(e => e.nivel === nivel) || ESCALADO_NIVELES.at(0);
@@ -15491,8 +15491,7 @@ document.addEventListener("DOMContentLoaded", () => {
             counterBadge.textContent = total > 0
                 ? "MOSTRANDO " + (inicio + 1) + "-" + fin + " DE " + total + " REGISTROS"
                 : "0 REGISTROS ENCONTRADOS";
-        }
-
+}
 paginaItems.forEach(u => {
 const cat = obtenerEtiquetas(u);
 const stats = u.estadisticas || {};
@@ -15523,9 +15522,10 @@ card.appendChild(imgFrame);
 const body = crearElemento("div", "card-body");
 body.appendChild(crearElemento("h3", "", u.nombre));
 const statsGrid = crearElemento("div", "stats-grid");
-[["VIDA", val(stats.vida)], ["ATAQUE", val(stats.ataque)], ["RANGO", val(stats.rango)],
-["ELABORACIÓN", val(stats.elaboracion)], ["VELOCIDAD", val(stats.velocidad)], ["POBLACIÓN", val(stats.poblacion)]
-].forEach(par => {
+Array.of(
+Array.of("VIDA", val(stats.vida)), Array.of("ATAQUE", val(stats.ataque)), Array.of("RANGO", val(stats.rango)),
+Array.of("ELABORACIÓN", val(stats.elaboracion)), Array.of("VELOCIDAD", val(stats.velocidad)), Array.of("POBLACIÓN", val(stats.poblacion))
+).forEach(par => {
 const box = crearElemento("div", "stat");
 box.appendChild(crearElemento("span", "", par.at(0)));
 box.appendChild(crearElemento("strong", "", par.at(1)));
@@ -15763,7 +15763,7 @@ const mapaPrincipal = datosImportados.map || (datosImportados.playerInfo && dato
 const listaMapas = datosImportados.maps || (datosImportados.playerInfo && datosImportados.playerInfo.maps);
 // CASO 1: Archivo directo del juego
 if ((mapaPrincipal && typeof mapaPrincipal === "object") || Array.isArray(listaMapas)) {
-const categoriasNoTropa = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
+const categoriasNoTropa = Array.of("EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM");
 function buscarClaveProfunda(obj, clave) {
 if (!obj || typeof obj !== "object") return null;
 if (obj[clave] && typeof obj[clave] === "object" && !Array.isArray(obj[clave])) return obj[clave];
@@ -15786,7 +15786,7 @@ nuevaColeccion[idKey].almacen += cant;
 }
 function procesarIsla(islaObj) {
 if (!islaObj || typeof islaObj !== "object") return;
-[islaObj.items || {}, islaObj.units || {}].forEach(contenedor => {
+Array.of(islaObj.items || {}, islaObj.units || {}).forEach(contenedor => {
 Object.values(contenedor).forEach(arrItem => {
 if (!Array.isArray(arrItem) || arrItem.length === 0) return;
 const idMapa = String(arrItem.at(0));
@@ -15809,7 +15809,7 @@ nuevaColeccion[idTrab].trabajando += 1;
 });
 });
 }
-const islas = [mapaPrincipal, ...(Array.isArray(listaMapas) ? listaMapas : Object.values(listaMapas || {}))].filter(Boolean);
+const islas = Array.of(mapaPrincipal, ...(Array.isArray(listaMapas) ? listaMapas : Object.values(listaMapas || {}))).filter(Boolean);
 islas.forEach(procesarIsla);
 sumarAlmacen(buscarClaveProfunda(datosImportados, "store"));
 sumarAlmacen(buscarClaveProfunda(datosImportados, "gifts"));
@@ -15901,9 +15901,13 @@ imgBox.innerHTML = u.imagen_ruta
 }
 if (statsBox) {
 statsBox.innerHTML = "";
-[["VIDA", st.vida.toLocaleString()], ["ATAQUE", st.ataque.toLocaleString()],
-["RANGO", st.rango], ["VELOCIDAD", st.velocidad], ["FC BASE", st.fuerza.toLocaleString()]
-].forEach(par => {
+Array.of(
+Array.of("VIDA", st.vida.toLocaleString()),
+Array.of("ATAQUE", st.ataque.toLocaleString()),
+Array.of("RANGO", st.rango),
+Array.of("VELOCIDAD", st.velocidad),
+Array.of("FC BASE", st.fuerza.toLocaleString())
+).forEach(par => {
 const item = crearElemento("div", "sim-stat-item");
 item.innerHTML = "" + par.at(0) + "" + par.at(1) + "";
 statsBox.appendChild(item);
@@ -15911,7 +15915,7 @@ statsBox.appendChild(item);
 }
 }
 if (unidadesCombatientes.length >= 2) {
-[1, 2].forEach((slot, idx) => {
+Array.of(1, 2).forEach((slot, idx) => {
 crearBuscadorUnidades({
 inputEl: document.getElementById("sim-search-" + slot),
 hiddenEl: document.getElementById("sim-select-" + slot),
@@ -15978,7 +15982,7 @@ if (estrategia === "ranged" && rango < 4) return;
 let cantDisp = (reg.almacen || 0) + (reg.mapa || 0) + (incluirTrabajando ? (reg.trabajando || 0) : 0);
 let score = fc;
 if (estrategia === "balanced") {
-score = Math.round(fc * (rango >= 4 ? 1.15 : 1.0) * (["MECHA", "AEREO", "VEHICULO"].includes(cat) ? 1.12 : 1.0));
+score = Math.round(fc * (rango >= 4 ? 1.15 : 1.0) * (Array.of("MECHA", "AEREO", "VEHICULO").includes(cat) ? 1.12 : 1.0));
 }
 const maxCopias = Math.min(cantDisp, Math.floor(poblacionMaxima / pob));
 for (let i = 0; i < maxCopias; i++) copiasDisponibles.push({ unidad: u, pob, fc, score });
@@ -16040,7 +16044,7 @@ squadGridEl.appendChild(card);
 // Comparador Lado a Lado (4 Ranuras)
 document.getElementById("sort-select")?.addEventListener("change", filtrar);
 const unidadesConStats = todasLasUnidades.filter(u => u.estadisticas);
-[1, 2, 3, 4].forEach(slot => {
+Array.of(1, 2, 3, 4).forEach(slot => {
 crearBuscadorUnidades({
 inputEl: document.getElementById("comp-search-" + slot),
 hiddenEl: document.getElementById("comp-id-" + slot),
@@ -16051,7 +16055,7 @@ onSelect: renderizarComparador
 document.getElementById("comp-level-" + slot)?.addEventListener("change", renderizarComparador);
 });
 document.getElementById("btn-clear-compare")?.addEventListener("click", () => {
-[1, 2, 3, 4].forEach(slot => {
+Array.of(1, 2, 3, 4).forEach(slot => {
 const inp = document.getElementById("comp-search-" + slot);
 const hid = document.getElementById("comp-id-" + slot);
 const lvl = document.getElementById("comp-level-" + slot);
@@ -16066,7 +16070,7 @@ const wrapper = document.getElementById("compare-wrapper");
 const badge = document.getElementById("compare-badge");
 if (!wrapper) return;
 const seleccionadas = [];
-[1, 2, 3, 4].forEach(slot => {
+Array.of(1, 2, 3, 4).forEach(slot => {
 const uid = document.getElementById("comp-id-" + slot)?.value;
 const nvl = parseInt(document.getElementById("comp-level-" + slot)?.value) || 1;
 if (uid && mapaUnidades[uid]) seleccionadas.push({ slot, unidad: mapaUnidades[uid], nivel: nvl });
@@ -16076,7 +16080,7 @@ if (seleccionadas.length === 0) {
 wrapper.innerHTML = 'Selecciona unidades en las ranuras de arriba para ver su tabla comparativa.';
 return;
 }
-const metricas = [
+const metricas = Array.of(
 { label: "VIDA (SEGÚN NIVEL)", get: it => obtenerStatsPorNivel(it.unidad, it.nivel).vida, max: true },
 { label: "ATAQUE (SEGÚN NIVEL)", get: it => obtenerStatsPorNivel(it.unidad, it.nivel).ataque, max: true },
 { label: "RANGO", get: it => (it.unidad.estadisticas && it.unidad.estadisticas.rango) || 0, max: true },
@@ -16093,7 +16097,7 @@ return p > 0 ? Math.round(f / p) : 0;
 },
 max: true
 }
-];
+);
 const tabla = crearElemento("table", "compare-table");
 const thead = crearElemento("thead");
 const trHead = crearElemento("tr");
@@ -16225,7 +16229,7 @@ rosterEl.appendChild(row);
 });
 totalsEl.textContent = "VIDA: " + vidaTotal.toLocaleString() + " | ATAQUE: " + ataqueTotal.toLocaleString() + " | FC: " + fcTotal.toLocaleString();
 }
-[1, 2].forEach(num => {
+Array.of(1, 2).forEach(num => {
 crearBuscadorUnidades({
 inputEl: document.getElementById("army" + num + "-search"),
 hiddenEl: document.getElementById("army" + num + "-selected-id"),
@@ -16261,7 +16265,7 @@ const mult = parseFloat(document.getElementById("ai-difficulty")?.value) || 1.0;
 let fcAliado = 0;
 ejercito1.forEach(it => { fcAliado += ((it.unidad.estadisticas && it.unidad.estadisticas.fuerza_combate) || 0) * it.cantidad; });
 const fcObjetivo = Math.round((fcAliado > 0 ? fcAliado : 200000) * mult);
-const topElite = [...unidadesCombatientes]
+const topElite = Array.from(unidadesCombatientes)
 .filter(u => (u.estadisticas.fuerza_combate || 0) > 0)
 .sort((a, b) => (b.estadisticas.fuerza_combate || 0) - (a.estadisticas.fuerza_combate || 0))
 .slice(0, mult <= 1.0 ? 45 : 25);
@@ -16325,226 +16329,193 @@ prompt("Copia manualmente este código (Ctrl + C):", codigo);
 }
 });
 }
-
-    // =========================================
-    // ESCÁNER DE SILUETAS POR CAPTURA (ULTRARRÁPIDO EN PARALELO)
-    // =========================================
-    const silFileInput = document.getElementById("sil-file-input");
-    const btnSelectSil = document.getElementById("btn-select-sil");
-    const silPreviewArea = document.getElementById("sil-preview-area");
-    const silMatchesGrid = document.getElementById("sil-matches-grid");
-    const silStatusBadge = document.getElementById("sil-status-badge");
-    const silCatFilter = document.getElementById("sil-cat-filter");
-
-    let ultimaImagenEscaneada = null;
-    const cacheFirmasCatalogo = {};
-
-    function extraerFirmaSilueta(imgElement, esCapturaJuego) {
-        const w = imgElement.naturalWidth || imgElement.width;
-        const h = imgElement.naturalHeight || imgElement.height;
-        if (!w || !h) return null;
-
-        const tmpCanvas = document.createElement("canvas");
-        tmpCanvas.width = w;
-        tmpCanvas.height = h;
-        const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
-        ctx.drawImage(imgElement, 0, 0, w, h);
-
-        // Si es captura de pantalla del juego, enfocar la cápsula central de fusión
-        const sx = esCapturaJuego ? Math.floor(w * 0.25) : 0;
-        const sy = esCapturaJuego ? Math.floor(h * 0.24) : 0;
-        const sw = esCapturaJuego ? Math.floor(w * 0.50) : w;
-        const sh = esCapturaJuego ? Math.floor(h * 0.44) : h;
-
-        let imgData;
-        try {
-            imgData = ctx.getImageData(sx, sy, sw, sh).data;
-        } catch (e) {
-            return null;
-        }
-
-        const mask = new Uint8Array(sw * sh);
-        const bgR = imgData;
-        const bgG = imgData;
-        const bgB = imgData;
-
-        let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
-
-        for (let y = 0; y < sh; y++) {
-            for (let x = 0; x < sw; x++) {
-                const idx = (y * sw + x) * 4;
-                const r = imgData[idx], g = imgData[idx + 1], b = imgData[idx + 2], a = imgData[idx + 3];
-                let esSilueta = false;
-
-                if (esCapturaJuego) {
-                    esSilueta = (r > 235 && g > 235 && b > 235);
-                } else {
-                    const distFondo = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
-                    esSilueta = (a > 128 && distFondo > 45);
-                }
-
-                if (esSilueta) {
-                    mask[y * sw + x] = 1;
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-                    activos++;
-                }
-            }
-        }
-
-        if (activos < 20 || maxX <= minX || maxY <= minY) return null;
-
-        const SIZE = 32;
-        const grid = new Uint8Array(SIZE * SIZE);
-        const boxW = maxX - minX + 1;
-        const boxH = maxY - minY + 1;
-
-        for (let gy = 0; gy < SIZE; gy++) {
-            const origY = minY + Math.floor((gy / SIZE) * boxH);
-            for (let gx = 0; gx < SIZE; gx++) {
-                const origX = minX + Math.floor((gx / SIZE) * boxW);
-                grid[gy * SIZE + gx] = mask[origY * sw + origX];
-            }
-        }
-        return { grid, ratio: boxW / boxH };
-    }
-
-    function calcularSimilitud(firmaA, firmaB) {
-        if (!firmaA || !firmaB) return 0;
-        const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
-        if (diffRatio > 0.65) return 0;
-
-        let interseccion = 0, union = 0;
-        for (let i = 0; i < firmaA.grid.length; i++) {
-            const a = firmaA.grid[i], b = firmaB.grid[i];
-            if (a || b) union++;
-            if (a && b) interseccion++;
-        }
-        if (union === 0) return 0;
-        return Math.max(0, Math.round(((interseccion / union) - diffRatio * 0.15) * 100));
-    }
-
-    function obtenerFirmaUnidadAsync(u) {
-        if (cacheFirmasCatalogo[u.id] !== undefined) {
-            return Promise.resolve(cacheFirmasCatalogo[u.id]);
-        }
-        return new Promise(resolve => {
-            const imgCat = new Image();
-            imgCat.crossOrigin = "anonymous";
-            const timer = setTimeout(() => {
-                cacheFirmasCatalogo[u.id] = null;
-                resolve(null);
-            }, 3000);
-
-            imgCat.onload = () => {
-                clearTimeout(timer);
-                const firma = extraerFirmaSilueta(imgCat, false);
-                cacheFirmasCatalogo[u.id] = firma;
-                resolve(firma);
-            };
-            imgCat.onerror = () => {
-                clearTimeout(timer);
-                cacheFirmasCatalogo[u.id] = null;
-                resolve(null);
-            };
-            imgCat.src = u.imagen_ruta;
-        });
-    }
-
-    async function procesarCapturaSilueta(imgUsuario) {
-        if (!silMatchesGrid) return;
-        ultimaImagenEscaneada = imgUsuario;
-        if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
-        silMatchesGrid.innerHTML = '<p class="sim-placeholder-text">Analizando silueta en paralelo...</p>';
-
-        let firmaObjetivo = extraerFirmaSilueta(imgUsuario, true);
-        if (!firmaObjetivo) firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
-
-        if (!firmaObjetivo) {
-            if (silStatusBadge) silStatusBadge.textContent = "SILUETA NO DETECTADA";
-            silMatchesGrid.innerHTML = '<p class="sim-placeholder-text">No se detectó una silueta blanca clara. Intenta recortar más cerca de la cápsula de fusión.</p>';
-            return;
-        }
-
-        const catFiltro = silCatFilter ? silCatFilter.value.toUpperCase() : "TODOS";
-        const excluidas = ["EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM"];
-        const candidatas = todasLasUnidades.filter(u => {
-            const cat = (u.categoria || "").toUpperCase();
-            if (!u.imagen_ruta || excluidas.includes(cat)) return false;
-            return catFiltro === "TODOS" || cat === catFiltro;
-        });
-
-        const resultados = [];
-        const LOTE = 50;
-
-        // Procesar en lotes paralelos de 50 imágenes (tarda menos de 1 segundo)
-        for (let i = 0; i < candidatas.length; i += LOTE) {
-            const grupo = candidatas.slice(i, i + LOTE);
-            const firmas = await Promise.all(grupo.map(u => obtenerFirmaUnidadAsync(u)));
-            firmas.forEach((firmaCat, idx) => {
-                const score = calcularSimilitud(firmaObjetivo, firmaCat);
-                if (score > 15) resultados.push({ unidad: grupo.at(idx), score });
-            });
-        }
-
-        resultados.sort((a, b) => b.score - a.score);
-        const top5 = resultados.slice(0, 5);
-
-        if (silStatusBadge) silStatusBadge.textContent = "ESCANEO COMPLETADO";
-        silMatchesGrid.innerHTML = "";
-
-        if (top5.length === 0) {
-            silMatchesGrid.innerHTML = '<p class="sim-placeholder-text">No se encontraron coincidencias claras. Prueba recortar la imagen solo alrededor de la silueta.</p>';
-            return;
-        }
-
-        top5.forEach((item, idx) => {
-            const u = item.unidad;
-            const card = crearElemento("div", "match-card" + (idx === 0 ? " top-match" : ""));
-            card.innerHTML =
-                '<span class="match-score">' + (idx === 0 ? "★ MEJOR: " : "") + item.score + '% SIMILITUD</span>' +
-                '<img src="' + u.imagen_ruta + '" alt="' + u.nombre + '">' +
-                '<h4>#' + u.id + ' ' + u.nombre + '</h4>';
-            silMatchesGrid.appendChild(card);
-        });
-    }
-
-    function cargarArchivoSilueta(file) {
-        if (!file || !file.type.startsWith("image/")) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => {
-                if (silPreviewArea) {
-                    silPreviewArea.innerHTML = "";
-                    silPreviewArea.appendChild(img);
-                }
-                procesarCapturaSilueta(img);
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    btnSelectSil?.addEventListener("click", () => silFileInput?.click());
-    silPreviewArea?.addEventListener("click", () => silFileInput?.click());
-    silFileInput?.addEventListener("change", (e) => cargarArchivoSilueta(e.target.files?.item(0)));
-    silCatFilter?.addEventListener("change", () => { if (ultimaImagenEscaneada) procesarCapturaSilueta(ultimaImagenEscaneada); });
-
-    document.addEventListener("paste", (e) => {
-        const items = e.clipboardData?.items;
-        if (!items) return;
-        for (const it of items) {
-            if (it.type.startsWith("image/")) {
-                cargarArchivoSilueta(it.getAsFile());
-                document.getElementById("siluetas")?.scrollIntoView({ behavior: "smooth" });
-                break;
-            }
-        }
-    });
-
+// =========================================
+// ESCÁNER DE SILUETAS POR CAPTURA (ULTRARRÁPIDO EN PARALELO)
+// =========================================
+const silFileInput = document.getElementById("sil-file-input");
+const btnSelectSil = document.getElementById("btn-select-sil");
+const silPreviewArea = document.getElementById("sil-preview-area");
+const silMatchesGrid = document.getElementById("sil-matches-grid");
+const silStatusBadge = document.getElementById("sil-status-badge");
+const silCatFilter = document.getElementById("sil-cat-filter");
+let ultimaImagenEscaneada = null;
+const cacheFirmasCatalogo = {};
+function extraerFirmaSilueta(imgElement, esCapturaJuego) {
+const w = imgElement.naturalWidth || imgElement.width;
+const h = imgElement.naturalHeight || imgElement.height;
+if (!w || !h) return null;
+const tmpCanvas = document.createElement("canvas");
+tmpCanvas.width = w;
+tmpCanvas.height = h;
+const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
+ctx.drawImage(imgElement, 0, 0, w, h);
+// Si es captura de pantalla del juego, enfocar la cápsula central de fusión
+const sx = esCapturaJuego ? Math.floor(w * 0.25) : 0;
+const sy = esCapturaJuego ? Math.floor(h * 0.24) : 0;
+const sw = esCapturaJuego ? Math.floor(w * 0.50) : w;
+const sh = esCapturaJuego ? Math.floor(h * 0.44) : h;
+let imgData;
+try {
+imgData = ctx.getImageData(sx, sy, sw, sh).data;
+} catch (e) {
+return null;
+}
+const mask = new Uint8Array(sw * sh);
+const bgR = imgData.at(0);
+const bgG = imgData.at(1);
+const bgB = imgData.at(2);
+let minX = sw, minY = sh, maxX = 0, maxY = 0, activos = 0;
+for (let y = 0; y < sh; y++) {
+for (let x = 0; x < sw; x++) {
+const idx = (y * sw + x) * 4;
+const r = imgData.at(idx), g = imgData.at(idx + 1), b = imgData.at(idx + 2), a = imgData.at(idx + 3);
+let esSilueta = false;
+if (esCapturaJuego) {
+esSilueta = (r > 235 && g > 235 && b > 235);
+} else {
+const distFondo = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+esSilueta = (a > 128 && distFondo > 45);
+}
+if (esSilueta) {
+mask[y * sw + x] = 1;
+if (x < minX) minX = x;
+if (x > maxX) maxX = x;
+if (y < minY) minY = y;
+if (y > maxY) maxY = y;
+activos++;
+}
+}
+}
+if (activos < 20 || maxX <= minX || maxY <= minY) return null;
+const SIZE = 32;
+const grid = new Uint8Array(SIZE * SIZE);
+const boxW = maxX - minX + 1;
+const boxH = maxY - minY + 1;
+for (let gy = 0; gy < SIZE; gy++) {
+const origY = minY + Math.floor((gy / SIZE) * boxH);
+for (let gx = 0; gx < SIZE; gx++) {
+const origX = minX + Math.floor((gx / SIZE) * boxW);
+grid[gy * SIZE + gx] = mask[origY * sw + origX];
+}
+}
+return { grid, ratio: boxW / boxH };
+}
+function calcularSimilitud(firmaA, firmaB) {
+if (!firmaA || !firmaB) return 0;
+const diffRatio = Math.abs(firmaA.ratio - firmaB.ratio);
+if (diffRatio > 0.65) return 0;
+let interseccion = 0, union = 0;
+for (let i = 0; i < firmaA.grid.length; i++) {
+const a = firmaA.grid.at(i), b = firmaB.grid.at(i);
+if (a || b) union++;
+if (a && b) interseccion++;
+}
+if (union === 0) return 0;
+return Math.max(0, Math.round(((interseccion / union) - diffRatio * 0.15) * 100));
+}
+function obtenerFirmaUnidadAsync(u) {
+if (cacheFirmasCatalogo[u.id] !== undefined) {
+return Promise.resolve(cacheFirmasCatalogo[u.id]);
+}
+return new Promise(resolve => {
+const imgCat = new Image();
+imgCat.crossOrigin = "anonymous";
+const timer = setTimeout(() => {
+cacheFirmasCatalogo[u.id] = null;
+resolve(null);
+}, 3000);
+imgCat.onload = () => {
+clearTimeout(timer);
+const firma = extraerFirmaSilueta(imgCat, false);
+cacheFirmasCatalogo[u.id] = firma;
+resolve(firma);
+};
+imgCat.onerror = () => {
+clearTimeout(timer);
+cacheFirmasCatalogo[u.id] = null;
+resolve(null);
+};
+imgCat.src = u.imagen_ruta;
+});
+}
+async function procesarCapturaSilueta(imgUsuario) {
+if (!silMatchesGrid) return;
+ultimaImagenEscaneada = imgUsuario;
+if (silStatusBadge) silStatusBadge.textContent = "ANALIZANDO SILUETA...";
+silMatchesGrid.innerHTML = 'Analizando silueta en paralelo...';
+let firmaObjetivo = extraerFirmaSilueta(imgUsuario, true);
+if (!firmaObjetivo) firmaObjetivo = extraerFirmaSilueta(imgUsuario, false);
+if (!firmaObjetivo) {
+if (silStatusBadge) silStatusBadge.textContent = "SILUETA NO DETECTADA";
+silMatchesGrid.innerHTML = 'No se detectó una silueta blanca clara. Intenta recortar más cerca de la cápsula de fusión.';
+return;
+}
+const catFiltro = silCatFilter ? silCatFilter.value.toUpperCase() : "TODOS";
+const excluidas = Array.of("EDIFICIO", "TERRENO", "RECURSOS", "CUPON", "ITEM");
+const candidatas = todasLasUnidades.filter(u => {
+const cat = (u.categoria || "").toUpperCase();
+if (!u.imagen_ruta || excluidas.includes(cat)) return false;
+return catFiltro === "TODOS" || cat === catFiltro;
+});
+const resultados = [];
+const LOTE = 50;
+for (let i = 0; i < candidatas.length; i += LOTE) {
+const grupo = candidatas.slice(i, i + LOTE);
+const firmas = await Promise.all(grupo.map(u => obtenerFirmaUnidadAsync(u)));
+firmas.forEach((firmaCat, idx) => {
+const score = calcularSimilitud(firmaObjetivo, firmaCat);
+if (score > 15) resultados.push({ unidad: grupo.at(idx), score });
+});
+}
+resultados.sort((a, b) => b.score - a.score);
+const top5 = resultados.slice(0, 5);
+if (silStatusBadge) silStatusBadge.textContent = "ESCANEO COMPLETADO";
+silMatchesGrid.innerHTML = "";
+if (top5.length === 0) {
+silMatchesGrid.innerHTML = 'No se encontraron coincidencias claras. Prueba recortar la imagen solo alrededor de la silueta.';
+return;
+}
+top5.forEach((item, idx) => {
+const u = item.unidad;
+const card = crearElemento("div", "match-card" + (idx === 0 ? " top-match" : ""));
+card.innerHTML =
+'' + (idx === 0 ? "★ MEJOR: " : "") + item.score + '% SIMILITUD' +
+'' +
+'#' + u.id + ' ' + u.nombre + '';
+silMatchesGrid.appendChild(card);
+});
+}
+function cargarArchivoSilueta(file) {
+if (!file || !file.type.startsWith("image/")) return;
+const reader = new FileReader();
+reader.onload = (ev) => {
+const img = new Image();
+img.onload = () => {
+if (silPreviewArea) {
+silPreviewArea.innerHTML = "";
+silPreviewArea.appendChild(img);
+}
+procesarCapturaSilueta(img);
+};
+img.src = ev.target.result;
+};
+reader.readAsDataURL(file);
+}
+btnSelectSil?.addEventListener("click", () => silFileInput?.click());
+silPreviewArea?.addEventListener("click", () => silFileInput?.click());
+silFileInput?.addEventListener("change", (e) => cargarArchivoSilueta(e.target.files?.item(0)));
+silCatFilter?.addEventListener("change", () => { if (ultimaImagenEscaneada) procesarCapturaSilueta(ultimaImagenEscaneada); });
+document.addEventListener("paste", (e) => {
+const items = e.clipboardData?.items;
+if (!items) return;
+for (const it of items) {
+if (it.type.startsWith("image/")) {
+cargarArchivoSilueta(it.getAsFile());
+document.getElementById("siluetas")?.scrollIntoView({ behavior: "smooth" });
+break;
+}
+}
+});
 actualizarBarraColeccion();
 actualizarVista();
 renderizarFacciones();

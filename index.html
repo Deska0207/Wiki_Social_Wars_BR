@@ -15894,11 +15894,11 @@ const nameEl = document.getElementById("sim-name-" + slot);
 const imgBox = document.getElementById("sim-img-" + slot);
 const statsBox = document.getElementById("sim-stats-" + slot);
 if (nameEl) nameEl.textContent = u.nombre + " (NVL " + nvl + ")";
-        if (imgBox) {
-            imgBox.innerHTML = u.imagen_ruta
-                ? '<img src="' + u.imagen_ruta + '" alt="' + u.nombre + '">'
-                : '<div class="no-image-placeholder">SIN IMAGEN</div>';
-        }
+if (imgBox) {
+imgBox.innerHTML = u.imagen_ruta
+? ''
+: 'SIN IMAGEN';
+}
 if (statsBox) {
 statsBox.innerHTML = "";
 Array.of(
@@ -15909,7 +15909,7 @@ Array.of("VELOCIDAD", st.velocidad),
 Array.of("FC BASE", st.fuerza.toLocaleString())
 ).forEach(par => {
 const item = crearElemento("div", "sim-stat-item");
-item.innerHTML = "<span>" + par.at(0) + "</span><strong>" + par.at(1) + "</strong>";
+item.innerHTML = "" + par.at(0) + "" + par.at(1) + "";
 statsBox.appendChild(item);
 });
 }
@@ -16305,7 +16305,8 @@ return { hp, dps: Math.round(dps * (total > 0 ? 1 + ((rangoProm / total) * 0.03)
 const p1 = calc(ejercito1), p2 = calc(ejercito2);
 const t1 = Math.ceil(p2.hp / Math.max(1, p1.dps));
 const t2 = Math.ceil(p1.hp / Math.max(1, p2.dps));
-resBox.innerHTML = t1 < t2
+resBox.innerHTML
+= t1 < t2
 ? '🏆 VICTORIA EJÉRCITO AZULAniquila al enemigo en ' + t1 + ' oleadas de ataque.'
 : t2 < t1
 ? '🏆 VICTORIA EJÉRCITO ROJOAniquila al aliado en ' + t2 + ' oleadas de ataque.'
@@ -16349,7 +16350,6 @@ tmpCanvas.width = w;
 tmpCanvas.height = h;
 const ctx = tmpCanvas.getContext("2d", { willReadFrequently: true });
 ctx.drawImage(imgElement, 0, 0, w, h);
-// Si es captura de pantalla del juego, enfocar la cápsula central de fusión
 const sx = esCapturaJuego ? Math.floor(w * 0.25) : 0;
 const sy = esCapturaJuego ? Math.floor(h * 0.24) : 0;
 const sw = esCapturaJuego ? Math.floor(w * 0.50) : w;
@@ -16475,16 +16475,15 @@ if (top5.length === 0) {
 silMatchesGrid.innerHTML = 'No se encontraron coincidencias claras. Prueba recortar la imagen solo alrededor de la silueta.';
 return;
 }
-        top5.forEach((item, idx) => {
-            const u = item.unidad;
-            const card = crearElemento("div", "match-card" + (idx === 0 ? " top-match" : ""));
-            card.innerHTML =
-                '<span class="match-score">' + (idx === 0 ? "★ MEJOR: " : "") + item.score + '% SIMILITUD</span>' +
-                '<img src="' + u.imagen_ruta + '" alt="' + u.nombre + '">' +
-                '<h4>#' + u.id + ' ' + u.nombre + '</h4>';
-            silMatchesGrid.appendChild(card);
-        });
-
+top5.forEach((item, idx) => {
+const u = item.unidad;
+const card = crearElemento("div", "match-card" + (idx === 0 ? " top-match" : ""));
+card.innerHTML =
+'' + (idx === 0 ? "★ MEJOR: " : "") + item.score + '% SIMILITUD' +
+'' +
+'#' + u.id + ' ' + u.nombre + '';
+silMatchesGrid.appendChild(card);
+});
 }
 function cargarArchivoSilueta(file) {
 if (!file || !file.type.startsWith("image/")) return;
